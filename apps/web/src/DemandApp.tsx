@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { demandQuestion } from '../../../packages/domain/src/demand.ts';
 import type { DemandAnswerType, DemandPollStatusType } from '../../../packages/domain/src/demand.ts';
 import { DemandApiFailure, loadDemandPoll, recordDemandResponse } from './demand-api.ts';
+import walkthroughPoster from './assets/platform-walkthrough-poster.jpg';
+import walkthroughVideo from './assets/platform-walkthrough.mp4';
 
 function errorText(error: unknown): string {
   if (error instanceof DemandApiFailure) {
@@ -49,36 +51,36 @@ export function DemandApp() {
 
   return <div className="demand-page">
     <a className="skip" href="#main">До основного вмісту</a>
-    <div className="demand-environment"><span className="status-dot" /> Платформа в розробці <span>Зараз доступне одне відкрите опитування</span></div>
     <header className="demand-header">
       <a className="brand" href="#top" aria-label="Відкритий голос — на початок сторінки"><span className="brand-mark">вг</span><span>Відкритий голос<small>Незалежна платформа</small></span></a>
-      <nav aria-label="Навігація сторінкою"><a href="#about">Про платформу</a><a href="#poll">Опитування</a><a href="#privacy">Приватність</a></nav>
-      <a className="button secondary" href="https://github.com/Lontkovsky/openvote">Відкритий код ↗</a>
+      <a className="button primary" href="#poll">Проголосувати</a>
     </header>
     <main id="main" className="demand-main">
       <section className="demand-hero" id="top">
-        <div className="demand-hero-copy"><p className="eyebrow">ПЛАТФОРМА В РОЗРОБЦІ</p><h1>{demandQuestion}</h1><p className="demand-lead">Ми розробляємо платформу, де можна буде брати участь у незалежних відкритих голосуваннях і розміщувати власні. Допоможіть зрозуміти, чи потрібна вам така платформа.</p><a className="button primary" href="#poll">Відповісти в опитуванні</a></div>
-        <aside className="demand-launch-card" aria-label="Межі першого запуску"><p className="eyebrow">ПЕРШИЙ ПУБЛІЧНИЙ КРОК</p><h2>Одне питання.<br />Одна остаточна відповідь.</h2><p>Цей запуск збирає лише сигнал попиту. Повна платформа ще розробляється.</p><dl><div><dt>Перевірка особи</dt><dd>Немає</dd></div><div><dt>Поточні результати</dt><dd>Публікуються</dd></div><div><dt>Дані у формі</dt><dd>Лише відповідь</dd></div></dl></aside>
+        <div className="demand-hero-copy"><p className="eyebrow">ВІДКРИТЕ ОПИТУВАННЯ</p><h1>{demandQuestion}</h1><p className="demand-lead">Допоможіть вирішити, чи варто розвивати платформу для незалежних відкритих голосувань.</p><a className="button primary" href="#poll">Проголосувати</a></div>
       </section>
 
-      <section className="demand-about" id="about" aria-labelledby="about-title"><div className="demand-section-heading"><p className="eyebrow">ЩО МИ РОЗРОБЛЯЄМО</p><h2 id="about-title">Місце для відкритих громадських питань</h2><p>Мета повної платформи — дати людям зрозумілий спосіб ставити питання, брати участь і перевіряти оприлюднені результати.</p></div><div className="demand-feature-grid"><article><span>01</span><h3>Розміщувати питання</h3><p>Автори зможуть пропонувати громадські, соціальні, економічні, культурні та інші теми.</p></article><article><span>02</span><h3>Брати участь</h3><p>Учасники зможуть прочитати контекст і зробити остаточний вибір за відкритими правилами.</p></article><article><span>03</span><h3>Перевіряти результат</h3><p>Оприлюднений підсумок матиме зрозумілу базу розрахунку й матеріали для незалежної перевірки.</p></article></div></section>
-
       <section className="demand-poll-section" id="poll" aria-labelledby="poll-title">
-        <div className="demand-poll-copy"><p className="eyebrow">ВІДКРИТЕ ОПИТУВАННЯ</p><h2 id="poll-title">Допоможіть перевірити потребу</h2><p>Оберіть одну відповідь. Вона стане остаточною для технічного ідентифікатора цього браузера.</p><div className="demand-methodology"><h3>Що означає цей результат</h3><p>Це відкрите опитування з добровільною участю. Воно не перевіряє особу або громадянство, не гарантує одну відповідь від однієї людини й не є репрезентативним опитуванням населення.</p><p>Це не державний сервіс і не офіційне голосування. Повна платформа ще розробляється; у цьому запуску немає перевірки права участі, криптографічного бюлетеня чи незалежно перевірюваного підрахунку.</p></div></div>
+        <div className="demand-poll-copy"><p className="eyebrow">ВАШ ГОЛОС</p><h2 id="poll-title">Оберіть одну відповідь</h2><p>Після підтвердження змінити її в цьому браузері не можна.</p><div className="demand-methodology"><p><strong>Важливо.</strong> Участь добровільна. Ми не перевіряємо особу чи громадянство, а в іншому браузері можна відповісти ще раз. Результати показують відповіді, а не кількість унікальних людей чи думку українців загалом.</p><p>Форма не запитує ім’я, документи або контакти.</p></div></div>
         <div className="demand-poll-card">
           {loading ? <p role="status">Завантаження опитування…</p> : poll === null ? <div className="notice error" role="alert">{error}</div> : <>
-            {recorded !== null ? <div className="demand-success" role="status"><span aria-hidden="true">✓</span><p className="eyebrow">ВІДПОВІДЬ ПРИЙНЯТО</p><h2>Дякуємо. Відповідь збережено.</h2><p>Ваш остаточний вибір у цьому браузері: <strong>{recorded}</strong>.</p></div> : <form onSubmit={event => { event.preventDefault(); void submit(); }}><p className="demand-version">Версія {poll.version} · {poll.pollId}</p><fieldset disabled={busy}><legend>{poll.question}</legend><div className="demand-answers">{poll.answers.map(answer => <label className="choice" key={answer}><input type="radio" name="demand-answer" checked={selected === answer} onChange={() => { setSelected(answer); setConfirmed(false); }} />{answer}</label>)}</div></fieldset>{selected !== null && <label className="choice demand-confirm"><input type="checkbox" checked={confirmed} disabled={busy} onChange={event => setConfirmed(event.target.checked)} />Підтверджую остаточну відповідь: «{selected}».</label>}{error !== null && <p className="notice error" role="alert">{error}</p>}<button className="primary" type="submit" disabled={selected === null || !confirmed || busy}>{busy ? 'Надсилання…' : 'Надіслати відповідь'}</button><p className="muted">Після прийняття змінити відповідь для цього технічного ідентифікатора не можна.</p></form>}
+            {recorded !== null ? <div className="demand-success" role="status"><span aria-hidden="true">✓</span><p className="eyebrow">ВІДПОВІДЬ ПРИЙНЯТО</p><h2>Дякуємо. Відповідь збережено.</h2><p>Ваш остаточний вибір у цьому браузері: <strong>{recorded}</strong>.</p></div> : <form onSubmit={event => { event.preventDefault(); void submit(); }}><fieldset disabled={busy}><legend>{poll.question}</legend><div className="demand-answers">{poll.answers.map(answer => <label className="choice" key={answer}><input type="radio" name="demand-answer" checked={selected === answer} onChange={() => { setSelected(answer); setConfirmed(false); }} />{answer}</label>)}</div></fieldset>{selected !== null && <label className="choice demand-confirm"><input type="checkbox" checked={confirmed} disabled={busy} onChange={event => setConfirmed(event.target.checked)} />Підтверджую остаточну відповідь: «{selected}».</label>}{error !== null && <p className="notice error" role="alert">{error}</p>}<button className="primary" type="submit" disabled={selected === null || !confirmed || busy}>{busy ? 'Надсилання…' : 'Надіслати відповідь'}</button></form>}
             <section className="demand-results" aria-labelledby="demand-results-title">
               <h3 id="demand-results-title">Поточні результати</h3>
               <p className="demand-results-total">Всього відповідей: <strong>{poll.results.totalResponses}</strong></p>
               <dl>{poll.answers.map((answer, index) => <div key={answer}><dt>{answer}</dt><dd>{poll.results.counts[index]}</dd></div>)}</dl>
-              <p className="muted">Результат описує відповіді учасників цього опитування, а не кількість унікальних людей чи думку українців загалом.</p>
             </section>
           </>}
         </div>
       </section>
 
-      <section className="demand-privacy" id="privacy" aria-labelledby="privacy-title"><div><p className="eyebrow">ПРИВАТНІСТЬ</p><h2 id="privacy-title">Без документів і контактних даних</h2></div><div><p>Форма не запитує ПІБ, РНОКПП, документи, email або номер телефону. Для обмеження випадкових повторних відповідей у цьому браузері до одного року зберігається випадковий технічний ідентифікатор; у базі зберігаються лише його необоротний відбиток і вибрана відповідь. Таблиця відповідей не містить IP-адреси, User-Agent або часу відповіді.</p><p>Очищення даних сайту або інший браузер дозволяють відповісти повторно. Тому результат описуватиме відповіді учасників цього опитування, а не кількість унікальних людей чи думку українців загалом.</p></div></section>
+      <section className="demand-demo" id="demo" aria-labelledby="demo-title">
+        <div className="demand-demo-heading"><p className="eyebrow">СИНТЕТИЧНА ДЕМОНСТРАЦІЯ</p><h2 id="demo-title">Як працюватиме платформа</h2><p>Короткий огляд поточного прототипу на тестових даних. Інтерфейс ще розвивається.</p></div>
+        <div className="demand-demo-grid">
+          <div className="demand-video-frame"><video controls muted playsInline preload="metadata" poster={walkthroughPoster} aria-label="Демонстрація створення питання, голосування та перегляду результату"><source src={walkthroughVideo} type="video/mp4" />Ваш браузер не підтримує відтворення відео.</video></div>
+          <ol className="demand-demo-steps" aria-label="Етапи роботи платформи" role="list"><li><span>01</span><div><h3>Створити питання</h3><p>Додати контекст, аргументи та правила участі.</p></div></li><li><span>02</span><div><h3>Проголосувати</h3><p>Ознайомитися з умовами й підтвердити остаточний вибір.</p></div></li><li><span>03</span><div><h3>Перевірити результат</h3><p>Побачити підсумок і матеріали для незалежної перевірки.</p></div></li></ol>
+        </div>
+      </section>
     </main>
     <footer><span>Відкритий голос · Відкритий код AGPL-3.0</span><span>Не державний сервіс. Не офіційне голосування.</span><a href="https://github.com/Lontkovsky/openvote">GitHub ↗</a></footer>
   </div>;

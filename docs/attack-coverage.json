@@ -144,7 +144,7 @@
       "title": "Добровільне голосування видається за думку населення",
       "attackerCapabilities": "Misleading presentation and external screenshots",
       "trustBoundary": "Platform controls its own UI and exports only",
-      "controls": "Strict shared result schema and publication gate; UI/API/JSON/CSV/SVG retain exact question/version, N, all answers, policy, times, verification and self-selection warning",
+      "controls": "Strict shared result schema and publication gate; UI/API/JSON/CSV/SVG retain exact question/version, N, all answers, policy, times, verification and self-selection warning. The demand landing keeps a concise visible self-selection, no-identity and non-representativeness notice next to the action.",
       "residualRisk": "External copies, screenshots and spreadsheet reinterpretation cannot be controlled",
       "requirements": [
         "15.1",
@@ -153,7 +153,8 @@
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/24",
         "https://github.com/Lontkovsky/openvote/issues/26",
-        "https://github.com/Lontkovsky/openvote/issues/29"
+        "https://github.com/Lontkovsky/openvote/issues/29",
+        "https://github.com/Lontkovsky/openvote/issues/59"
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
@@ -163,15 +164,17 @@
         "tests/domain.test.ts",
         "tests/result-exports.test.ts",
         "tests/e2e/inapp.mjs",
-        "tests/services.test.ts"
+        "tests/services.test.ts",
+        "tests/demand.test.ts"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
         "artifacts/e2e/report.json",
         "artifacts/e2e/result.csv",
-        "artifacts/e2e/share.svg"
+        "artifacts/e2e/share.svg",
+        "docs/PROGRESS.md"
       ],
-      "remainingAcceptanceCriteria": "Issue #26 implemented and merged after CI. Third-party misrepresentation remains outside platform control."
+      "remainingAcceptanceCriteria": "Issue #26 implemented and merged after CI. Issue #59 still requires exact-head CI and hosted HTTPS verification. Third-party misrepresentation remains outside platform control."
     },
     {
       "id": "A06",
