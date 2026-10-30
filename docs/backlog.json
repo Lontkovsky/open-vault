@@ -1201,6 +1201,41 @@
       "risk": "High",
       "issue": "https://github.com/Lontkovsky/openvote/issues/53",
       "number": 53
+    },
+    {
+      "id": "V033",
+      "epic": "E10",
+      "title": "Simplify demand landing and add synthetic platform walkthrough",
+      "goal": "Make the public demand poll immediately understandable and demonstrate the existing platform prototype without exposing real data.",
+      "scope": "Action-first demand landing, one silent same-origin walkthrough assembled from real synthetic UI screens, concise methodology limits and hosted verification",
+      "outOfScope": "Backend or database changes, the full-platform cutover, real identity data, third-party video hosting, autoplay, narration or production-readiness claims.",
+      "dependencies": [
+        "E10",
+        "V032"
+      ],
+      "acceptance": [
+        "The exact question and primary vote action are clear in the first viewport, with the existing demand poll immediately after the hero",
+        "The three-answer confirmation, final receipt, server-authoritative counts and reload persistence remain unchanged",
+        "One accessible self-hosted silent video shows synthetic question creation, voting and a published result",
+        "Concise visible copy retains voluntary self-selection, no identity or citizenship verification, another-browser repeatability and non-representativeness",
+        "Desktop, keyboard, 390x844, exact-head CI and hosted HTTPS checks pass without submitting a production response"
+      ],
+      "verification": "Run the focused demand test, types, both web builds, lint/public scan, media metadata and packaging checks, then verify local and hosted behavior in the retained in-app Browser.",
+      "privacy": "Only synthetic local UI is captured. No identity selection, credential, key, production respondent, browser storage, console, local path or third-party media appears in the asset.",
+      "fixtures": "Existing synthetic create form, open-poll choice and published 1/1/1 result from the local full-platform UI.",
+      "howToVerify": "Follow issue #59 and docs/DEMAND_DEPLOYMENT.md; keep local, CI and hosted evidence distinct.",
+      "requirements": [
+        "1",
+        "3",
+        "8",
+        "12",
+        "15.5"
+      ],
+      "priority": "P0",
+      "phase": "Production Readiness",
+      "risk": "Medium",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/59",
+      "number": 59
     }
   ]
 }

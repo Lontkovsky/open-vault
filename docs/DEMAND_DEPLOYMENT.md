@@ -57,3 +57,16 @@ The Ukraine.com.ua zone was exported before the approved DNS change. The apex us
 PR #57 exact-head CI passed and merged as `33042ef83209a290cc1df6ee450ee15405a0eb94`; the exact `main` workflow also passed. Render deploy `dep-dbifsjqvcj2c73fan370` reached `live`. In the retained in-app Browser, the apex displayed two accepted responses as `Підтримую 2`, `Не підтримую 0`, `Утримуюсь 0`, with the representativeness warning and no console warnings/errors. The same values remained readable without horizontal overflow at 390×844.
 
 An actual Render restart made both the page and API temporarily return 502, then recover to 200. Reloading the same retained Browser tab after recovery showed the same `2/0/0` aggregate, proving that the two existing production rows survived the restart. No additional production response was submitted for verification.
+
+## Action-first landing and synthetic walkthrough
+
+Issue [#59](https://github.com/Lontkovsky/openvote/issues/59) and [PR #60](https://github.com/Lontkovsky/openvote/pull/60) are a presentation-only follow-up to the verified launch in #53. They keep the exact demand API, database, cookie and aggregate contracts, but move the confirmed question and vote action ahead of product explanation. The page retains one concise visible notice that participation is voluntary, identity and citizenship are not checked, another browser can respond again, and the counts are not unique people or the opinion of Ukrainians generally.
+
+The separate `Як працюватиме платформа` section uses one repository-owned, silent H.264 MP4 with a local poster and native controls. Its three frames were captured in the retained in-app Browser from the existing local synthetic interface at source revision `18869231e2728da393cb4c6c63eb5dec98b195ba`: a populated create form, a selected final vote before submission, and a Published `1/1/1` result. The asset contains no identity selection, credential, key, production response, browser storage, console, local path, narration or third-party media. It is explicitly labeled as a synthetic prototype whose interface may change.
+
+Focused verification for this follow-up is:
+
+- inspect the source frames and encoded asset; use `ffprobe` to confirm H.264, 1280×720, 30 fps, limited-range `yuv420p`, no audio and bounded size;
+- run the demand contract test, types, both web builds, lint/public scan and demand Docker image build;
+- in the retained in-app Browser, verify the first viewport, anchor, three answers, explicit confirmation, local submission and reload, exact aggregate sum, one paused video, play/pause/seek, keyboard focus and 390×844 layout;
+- after exact-head CI and merge, verify the same page and media over HTTPS without submitting a production response, and record the unchanged live aggregate separately.
