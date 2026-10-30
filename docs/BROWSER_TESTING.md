@@ -27,7 +27,7 @@ Execute each stage with `await suite.step(name)` in this order:
 
 ## Verification checklist
 
-| Case | Prerequisite | Expected result | Baseline run `92387c0df2` | Verified run `7f67776650` |
+| Case | Prerequisite | Expected result | Baseline run `92387c0df2` | Verified run `dadf885395` |
 |---|---|---|---|---|
 | Create | Healthy local services and synthetic providers | Structured versioned draft enters Review | Passed | Passed |
 | Review start | Moderator synthetic identity | Complete rubric and reason are submitted | Passed | Passed |
