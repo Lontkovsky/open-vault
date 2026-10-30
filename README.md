@@ -18,7 +18,7 @@ Issue [#53](https://github.com/Lontkovsky/openvote/issues/53) owns the first pub
 
 This poll is not identity-verified voting or a representative survey. Clearing site data or using another browser permits another response, so it cannot establish one-person-one-vote or the opinion of Ukrainians generally. The exact cost, privacy and approval boundaries are documented in [minimal deployment operations](docs/DEMAND_DEPLOYMENT.md).
 
-The same web service has one 1 GB persistent disk reserved for the future full-platform work in [#51](https://github.com/Lontkovsky/openvote/issues/51); demand responses remain exclusively in `openvote-demand`. The future cutover will suspend that database, resume the three role databases and switch the service to the Belenios runtime, which will initialize and reuse the attached disk for runtime keys and state. Full hosted verification remains deferred; [the full deployment contract](docs/DEPLOYMENT.md) remains distinct from the demand launch.
+The same web service has one 1 GB persistent disk reserved for the future full-platform work in [#51](https://github.com/Lontkovsky/openvote/issues/51); demand responses remain exclusively in `openvote-demand`. The future cutover will suspend that database, resume the three role databases and switch the service to the Belenios runtime, which will initialize and reuse the attached disk for runtime keys and state. Full-platform hosted verification remains deferred; [the full deployment contract](docs/DEPLOYMENT.md) remains distinct from the verified demand launch.
 
 For the local application, install Node **24.20.0**, pnpm **10.33.0**, Docker Compose and Python 3, then run from the cloned repository:
 
