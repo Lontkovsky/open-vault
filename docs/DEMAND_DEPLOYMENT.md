@@ -17,7 +17,7 @@ The owner approved creating the unified resources. Render suspension is an opera
 
 ## Product and data boundary
 
-The launch serves one Ukrainian landing page and one versioned demand poll. It does not expose the full catalogue, user-created polls, identity verification, Belenios, trustees or live public results. It must not claim that a response represents a unique person, a Ukrainian citizen or the population of Ukraine.
+The launch serves one Ukrainian landing page and one versioned demand poll. It does not expose the full catalogue, user-created polls, identity verification, Belenios, trustees or the formal closing/publication workflow of the full platform. The landing publicly shows the total number of accepted responses and the exact count for each established answer, including zeros. It must not claim that a response represents a unique person, a Ukrainian citizen or the population of Ukraine.
 
 The browser credential is a host-only HttpOnly SameSite=Strict cookie with a one-year maximum age and the Secure flag on HTTPS. Each response row contains only the poll ID and version, the credential hash and the final selected answer; it has no identity, contact, IP address, User-Agent or response timestamp field. The public page must disclose voluntary self-selection, the lack of identity and citizenship verification, the browser-cookie limitation, and the absence of one-person-one-vote guarantees.
 
@@ -38,7 +38,7 @@ render blueprints validate render.yaml --output json
 docker build --platform linux/amd64 -f infra/demand.Dockerfile -t openvote-demand:local .
 ```
 
-In the retained in-app Browser session, open the local demand page and verify the three answers, explicit final confirmation, successful receipt, reload persistence, absence of editable controls after submission, absence of public counts, and a 390×844 layout without horizontal overflow. Keep this local evidence separate from the hosted checks below.
+In the retained in-app Browser session, open the local demand page and verify the three answers, explicit final confirmation, successful receipt, reload persistence, absence of editable controls after submission, the zero state, exact public counts before and after submission, equality of the total with the three-count sum, and a 390×844 layout without horizontal overflow. Keep this local evidence separate from the hosted checks below.
 
 ## Unified full-stack environment
 
