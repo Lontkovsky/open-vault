@@ -1,5 +1,5 @@
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
 
@@ -32,15 +32,12 @@ export async function createRunner(tab) {
   async function control(provider, available) { await fixture('/provider-control', { provider, available }); }
   async function unavailable() { await p.getByRole('alert').filter({ hasText: 'Провайдер недоступний.' }).waitFor({ state: 'visible' }); }
   async function exported(button, prefix, extension) {
-    const before = new Set(await readdir(run.downloadDirectory));
+    const waiting = p.waitForEvent('download', { timeoutMs: 30000 });
     await click('button', button);
-    let path;
-    await until(async () => {
-      const files = (await readdir(run.downloadDirectory)).filter(name => !before.has(name) && name.startsWith(prefix) && name.endsWith(extension));
-      if (files.length > 1) throw new Error('AMBIGUOUS_DOWNLOADED_ARTIFACT');
-      if (files.length === 0) return false;
-      path = join(run.downloadDirectory, files[0]); return true;
-    }, 'New completed ' + prefix + ' download');
+    const path = await (await waiting).path({ timeoutMs: 30000 });
+    if (path === null) throw new Error('DOWNLOADED_ARTIFACT_PATH_UNAVAILABLE');
+    const name = basename(path);
+    if (!name.startsWith(prefix) || !name.endsWith(extension)) throw new Error('DOWNLOADED_ARTIFACT_NAME_MISMATCH');
     return readFile(path, 'utf8');
   }
   function parseExport(format, text) {
