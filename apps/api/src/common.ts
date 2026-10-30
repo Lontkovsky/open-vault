@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { Envelope, Environment } from '../../../packages/domain/src/index.ts';
 import type { EnvelopeType } from '../../../packages/domain/src/index.ts';
 
-export const Role = z.enum(['identity', 'ballot', 'management', 'provider-A', 'provider-B']);
+export const Role = z.enum(['identity', 'ballot', 'management', 'provider-A', 'provider-B', 'demand']);
 export const Config = z.strictObject({
   environment: Environment, role: Role, port: z.number().int(), serviceToken: z.string().min(32),
   database: z.strictObject({ host: z.string(), port: z.number().int(), database: z.string(), user: z.string(), password: z.string() }).optional(),
@@ -90,7 +90,7 @@ export async function jsonRequest(url: string, body: unknown, authorization: str
 export async function core(config: ConfigType, request: unknown, ceremony = false): Promise<unknown> {
   return jsonRequest(`http://127.0.0.1:${ceremony ? 4311 : 4310}/run`, request, required(config.coreToken));
 }
-export async function application(config: ConfigType, publicOrigin: string) {
+export async function application<T extends Pick<ConfigType, 'environment' | 'role'>>(config: T, publicOrigin: string) {
   const origin = parsePublicOrigin(publicOrigin, config.environment);
   const app = Fastify({ logger: false, bodyLimit: 1024 * 1024, requestTimeout: 100000,
     connectionTimeout: 100000, routerOptions: { maxParamLength: 100 }, logController: new LogController({ disableRequestLogging: true }) });

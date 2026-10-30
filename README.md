@@ -12,18 +12,13 @@ The first implemented slice runs **unmodified Belenios 3.3.0 cryptography** with
 
 The application slice now includes synthetic identity providers A/B, separate PostgreSQL stores, client encryption, final ballot acceptance, trustee finality checks, public results and a Ukrainian React interface. It is still **incomplete development work**, with remaining acceptance criteria recorded in [progress](docs/PROGRESS.md).
 
-## Public synthetic demo deployment
+## Minimal demand-validation launch
 
-The repository-owned [Render Blueprint](render.yaml) declares one paid Docker web service, three separate paid PostgreSQL databases and a persistent runtime disk in a `demo` environment. The web service preserves browser trust boundaries with distinct hosts:
+Issue [#53](https://github.com/Lontkovsky/openvote/issues/53) owns the first public surface planned for `openvote.com.ua`: one Ukrainian landing page and one voluntary demand poll. The default [Render Blueprint](render.yaml) declares one small web service and one PostgreSQL database, with no persistent service disk, identity providers, ballot service, trustees or API subdomains. Each response row contains only the poll ID and version, a hash of a random browser credential, and the final selected answer; it does not contain identity, contact, network or response-time fields, and the application does not publish live response counts.
 
-- `openvote.com.ua` — the Ukrainian SPA;
-- `identity.openvote.com.ua` — identity and eligibility;
-- `ballot.openvote.com.ua` — ballot box and public audit data;
-- `management.openvote.com.ua` — poll lifecycle and moderation.
+This poll is not identity-verified voting or a representative survey. Clearing site data or using another browser permits another response, so it cannot establish one-person-one-vote or the opinion of Ukrainians generally. The exact cost, privacy and approval boundaries are documented in [minimal deployment operations](docs/DEMAND_DEPLOYMENT.md). No paid Render resource or DNS change is implied by the repository configuration.
 
-Only Nginx listens on Render's public `$PORT`. The five application roles and two unchanged Belenios bridges listen on container loopback. First startup is allowed only when the persistent disk and all three databases are empty. Runtime keys and role configuration are generated once, migrations complete before health becomes available, and later starts require the exact same disk/database/origin bindings. Missing or partial state fails startup instead of generating replacement keys.
-
-This is a **public synthetic demo**, not a production launch: only predefined `TEST-PERSON` identities are accepted, mock providers remain visibly labeled, one operator controls the service and disk, and backup/restore, independent trustees, real identity providers, legal readiness and external audit remain open. Exact deployment, DNS, restart and rollback boundaries are documented in [deployment operations](docs/DEPLOYMENT.md).
+The complete three-database synthetic-demo configuration remains preserved at [infra/render.full.yaml](infra/render.full.yaml) for the future work in [#51](https://github.com/Lontkovsky/openvote/issues/51). It retains the separate identity, ballot and management origins, Belenios runtime and persistent key disk; [its deployment contract](docs/DEPLOYMENT.md) remains distinct from the minimal launch.
 
 For the local application, install Node **24.20.0**, pnpm **10.33.0**, Docker Compose and Python 3, then run from the cloned repository:
 
@@ -44,6 +39,8 @@ pnpm build
 ```
 
 Open [the local application](http://localhost:5173). `seed` creates one immutable seven-day synthetic poll and is idempotent. Select a predefined `TEST-PERSON` identity; never supply real documents. Person 0012 is the test moderator. Other fixtures include a non-owner, a minor and a non-UA citizen to exercise explicit eligibility rules. Session refresh requires re-identification; it never resets voting rights. Generated credentials and trustee files are private, ignored `.runtime/` data. Do not publish that directory.
+
+To inspect the separate demand landing locally while the full platform remains available, run `pnpm dev:demand` and open [http://localhost:5174](http://localhost:5174). It reuses the local management PostgreSQL instance only as a development database; the Render Blueprint provisions one dedicated `openvote_demand` database.
 
 The integration tests use live local services and native cryptography. They remove only the poll fixtures they created. Interactive browser checks reuse the existing in-app Browser and are separate from the CLI tests. Follow [the E2E procedure](docs/BROWSER_TESTING.md) to run `pnpm test:e2e` with the existing tab binding. Current final-source run `dadf885395` passed all 14 stages / 38 assertions, including real JSON/CSV/SVG/audit downloads and separate native verification of the downloaded archive. [Browser evidence status](artifacts/e2e/README.md) records the exact source digest and bounded result. Complete offline-ballot/error coverage and final release instructions remain open.
 

@@ -1,17 +1,17 @@
-# Render synthetic demo deployment
+# Future full Render synthetic demo deployment
 
-Issue [#51](https://github.com/Lontkovsky/openvote/issues/51) owns this vertical slice. It deploys a public **synthetic demo** at `openvote.com.ua`; it does not complete the Production Readiness epic.
+Issue [#51](https://github.com/Lontkovsky/openvote/issues/51) owns this future vertical slice. Its Blueprint is preserved at [`infra/render.full.yaml`](../infra/render.full.yaml); the repository default now points to the smaller demand-validation launch in [#53](https://github.com/Lontkovsky/openvote/issues/53). Selecting this full Blueprint would deploy a public **synthetic demo** at `openvote.com.ua`; it does not complete the Production Readiness epic.
 
 ## Declared resources
 
-`render.yaml` creates the `Open Vote` project and `demo` environment in Frankfurt:
+`infra/render.full.yaml` creates the `Open Vote` project and `demo` environment in Frankfurt:
 
 - one Docker web service, `openvote-demo`, on plan `1c-2g`;
 - three PostgreSQL 18 databases on plan `0.1c-256mb`, one each for identity, ballot and management;
 - one 1 GB persistent disk mounted at `/app/.runtime-disk`; OpenVote owns only its deterministic `state` subdirectory and exposes it to the existing runtime paths through the image's fixed `/app/.runtime` symlink;
 - the apex and wildcard custom-domain entries.
 
-The verified base subtotal on 2026-10-30 is USD 43.25/month before VAT, bandwidth/build overages and any Dashboard-calculated domain overage: USD 25 for compute, USD 18 for three databases and USD 0.25 for the disk. Render's Dashboard review is the authoritative charge and requires owner confirmation before `Deploy Blueprint`.
+The Dashboard review observed on 2026-10-30 totals USD 44.15/month before VAT and usage overages: USD 25 for compute, USD 18.90 for three databases and USD 0.25 for the disk. Render's Dashboard review is the authoritative charge and requires owner confirmation before `Deploy Blueprint`.
 
 ## Runtime and trust boundaries
 

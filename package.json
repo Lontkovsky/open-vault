@@ -5,11 +5,15 @@
   "type": "module",
   "license": "AGPL-3.0-only",
   "packageManager": "pnpm@10.33.0",
-  "engines": { "node": ">=24.20.0 <25" },
+  "engines": {
+    "node": ">=24.20.0 <25"
+  },
   "scripts": {
     "bootstrap": "node scripts/bootstrap.mjs",
     "dev": "node scripts/dev.mjs",
+    "dev:demand": "node scripts/demand-dev.ts",
     "render:start": "node scripts/render-start.ts",
+    "demand:start": "node scripts/demand-start.ts",
     "seed": "node scripts/seed.ts",
     "test": "vitest run",
     "test:e2e": "node scripts/e2e.mjs",
@@ -21,14 +25,17 @@
     "lint": "python3 scripts/scan-public.py && git diff --check",
     "types": "tsc --noEmit",
     "build": "pnpm --filter @openvote/web build",
+    "build:demand": "pnpm --filter @openvote/web build:demand",
     "migrate": "node scripts/migrate.ts"
   },
   "dependencies": {
+    "@fastify/cookie": "11.1.5",
     "@fastify/cors": "11.3.0",
     "@fastify/helmet": "13.1.1",
-    "fastify": "5.12.3",
+    "@fastify/static": "10.1.8",
+    "fastify": "5.12.7",
     "pg": "8.23.0",
-    "zod": "4.5.4"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

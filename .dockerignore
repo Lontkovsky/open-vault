@@ -7,5 +7,6 @@ node_modules
 **/_build
 **/_run
 dist
+dist-demand
 artifacts
 vendor/belenios/.git

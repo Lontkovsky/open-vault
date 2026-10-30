@@ -1,0 +1,212 @@
+import pg from 'pg';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { demandApp, demandCredentialCookie } from '../apps/api/src/demand.ts';
+import { database, readConfig, sha } from '../apps/api/src/common.ts';
+import { DemandPollStatus, DemandResponseReceipt, demandAnswers, demandPollId, demandQuestion } from '../packages/domain/src/demand.ts';
+import { migrateDirectory } from '../scripts/migrate.ts';
+import { parseDemandConfiguration } from '../scripts/demand-start.ts';
+
+const origin = 'http://localhost:5174';
+let pool: pg.Pool;
+let app: Awaited<ReturnType<typeof demandApp>>;
+
+function cookiePair(response: { headers: Record<string, string | string[] | number | undefined> }): string {
+  const header = response.headers['set-cookie'];
+  if (typeof header !== 'string') throw new Error('SET_COOKIE_MISSING');
+  const pair = header.split(';')[0];
+  if (pair === undefined) throw new Error('SET_COOKIE_INVALID');
+  return pair;
+}
+
+async function bootstrap() {
+  const response = await app.inject({ method: 'GET', url: '/api/v1/demand-poll' });
+  expect(response.statusCode).toBe(200);
+  return { response, cookie: cookiePair(response) };
+}
+
+async function submit(cookie: string, answer: string, requestOrigin = origin) {
+  return app.inject({ method: 'POST', url: '/api/v1/demand-poll',
+    headers: { cookie, origin: requestOrigin, 'content-type': 'application/json' }, payload: { answer } });
+}
+
+beforeAll(async () => {
+  pool = database(await readConfig('management'));
+  await migrateDirectory(pool, 'migrations/demand');
+  app = await demandApp(pool, 'test', origin);
+});
+
+afterEach(async () => {
+  await pool.query('DELETE FROM demand_responses');
+});
+
+afterAll(async () => {
+  await app.close();
+});
+
+describe('minimal demand poll', () => {
+  it('bootstraps one private browser credential and returns only the versioned public contract', async () => {
+    const { response, cookie } = await bootstrap();
+    expect(cookie).toMatch(new RegExp(`^${demandCredentialCookie}=[A-Za-z0-9_-]{43}$`));
+    expect(response.headers['set-cookie']).toContain('HttpOnly');
+    expect(response.headers['set-cookie']).toContain('SameSite=Strict');
+    expect(response.headers['set-cookie']).toContain('Path=/');
+    expect(response.headers['set-cookie']).toContain('Max-Age=31536000');
+    expect(response.headers['set-cookie']).not.toContain('Secure');
+    const status = DemandPollStatus.parse(response.json());
+    expect(status).toEqual({ apiVersion: 'v1', pollId: demandPollId, version: 1, question: demandQuestion,
+      answers: demandAnswers, selfSelected: true, identityVerified: false, uniquePersonGuaranteed: false, response: null });
+    expect(response.body).not.toContain(cookie.split('=')[1] ?? 'missing');
+    expect(response.body).not.toMatch(/count|total|percentage/i);
+  });
+
+  it('sets Secure on the production-origin credential', async () => {
+    const securePool = database(await readConfig('management'));
+    const secureApp = await demandApp(securePool, 'demo', 'https://openvote.com.ua');
+    try {
+      const response = await secureApp.inject({ method: 'GET', url: '/api/v1/demand-poll' });
+      expect(response.statusCode).toBe(200);
+      expect(response.headers['set-cookie']).toContain('Secure');
+      expect(response.headers['set-cookie']).not.toContain('Domain=');
+    } finally { await secureApp.close(); }
+  });
+
+  it('records one final answer and returns it after reload without exposing aggregate results', async () => {
+    const { cookie } = await bootstrap();
+    const response = await submit(cookie, demandAnswers[0]);
+    expect(response.statusCode).toBe(200);
+    expect(DemandResponseReceipt.parse(response.json())).toEqual({ recorded: true, answer: demandAnswers[0] });
+    const reload = await app.inject({ method: 'GET', url: '/api/v1/demand-poll', headers: { cookie } });
+    expect(DemandPollStatus.parse(reload.json()).response).toEqual({ answer: demandAnswers[0] });
+    expect(reload.body).not.toMatch(/count|total|percentage/i);
+    const rows = await pool.query('SELECT poll_id,poll_version,credential_hash,answer FROM demand_responses');
+    expect(rows.rows).toHaveLength(1);
+    expect(rows.rows[0]).toEqual({ poll_id: demandPollId, poll_version: 1,
+      credential_hash: sha(cookie.split('=')[1] ?? ''), answer: demandAnswers[0] });
+    expect(JSON.stringify(rows.rows)).not.toContain(cookie);
+    const columns = await pool.query<{ column_name: string }>(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='demand_responses' ORDER BY ordinal_position",
+    );
+    expect(columns.rows.map(row => row.column_name)).toEqual(['poll_id', 'poll_version', 'credential_hash', 'answer']);
+  });
+
+  it('treats the same final answer as idempotent and rejects a changed answer', async () => {
+    const { cookie } = await bootstrap();
+    expect((await submit(cookie, demandAnswers[1])).statusCode).toBe(200);
+    expect((await submit(cookie, demandAnswers[1])).statusCode).toBe(200);
+    const changed = await submit(cookie, demandAnswers[2]);
+    expect(changed.statusCode).toBe(409);
+    expect(changed.json()).toEqual({ error: 'FINAL_RESPONSE_ALREADY_RECORDED' });
+    const result = await pool.query<{ answer: string; count: string }>('SELECT min(answer) AS answer,count(*) FROM demand_responses');
+    expect(result.rows[0]).toEqual({ answer: demandAnswers[1], count: '1' });
+  });
+
+  it('stores one row for ten concurrent identical submissions', async () => {
+    const { cookie } = await bootstrap();
+    const responses = await Promise.all(Array.from({ length: 10 }, () => submit(cookie, demandAnswers[0])));
+    expect(responses.every(response => response.statusCode === 200)).toBe(true);
+    expect((await pool.query('SELECT 1 FROM demand_responses')).rowCount).toBe(1);
+  });
+
+  it('makes one of two simultaneous conflicting answers final', async () => {
+    const { cookie } = await bootstrap();
+    const responses = await Promise.all([submit(cookie, demandAnswers[0]), submit(cookie, demandAnswers[1])]);
+    expect(responses.map(response => response.statusCode).sort()).toEqual([200, 409]);
+    const stored = await pool.query<{ answer: string }>('SELECT answer FROM demand_responses');
+    expect(stored.rows).toHaveLength(1);
+    expect(demandAnswers).toContain(stored.rows[0]?.answer);
+  });
+
+  it('rejects missing or malformed credentials without minting replacements', async () => {
+    const missing = await app.inject({ method: 'POST', url: '/api/v1/demand-poll',
+      headers: { origin, 'content-type': 'application/json' }, payload: { answer: demandAnswers[0] } });
+    expect(missing.statusCode).toBe(401);
+    expect(missing.json()).toEqual({ error: 'DEMAND_CREDENTIAL_REQUIRED' });
+    expect(missing.headers['set-cookie']).toBeUndefined();
+    const malformed = await app.inject({ method: 'GET', url: '/api/v1/demand-poll',
+      headers: { cookie: `${demandCredentialCookie}=damaged` } });
+    expect(malformed.statusCode).toBe(400);
+    expect(malformed.json()).toEqual({ error: 'INVALID_DEMAND_CREDENTIAL' });
+    expect(malformed.headers['set-cookie']).toBeUndefined();
+    expect((await pool.query('SELECT 1 FROM demand_responses')).rowCount).toBe(0);
+  });
+
+  it('requires the exact write origin', async () => {
+    const { cookie } = await bootstrap();
+    const missing = await app.inject({ method: 'POST', url: '/api/v1/demand-poll',
+      headers: { cookie, 'content-type': 'application/json' }, payload: { answer: demandAnswers[0] } });
+    expect(missing.statusCode).toBe(403);
+    expect(missing.json()).toEqual({ error: 'ORIGIN_REJECTED' });
+    for (const foreign of ['https://openvote.com.ua.attacker.example', 'https://localhost:5174', 'http://localhost:5174.attacker.example']) {
+      const response = await submit(cookie, demandAnswers[0], foreign);
+      expect(response.statusCode).toBe(403);
+      expect(response.json()).toEqual({ error: 'ORIGIN_REJECTED' });
+    }
+    expect((await pool.query('SELECT 1 FROM demand_responses')).rowCount).toBe(0);
+  });
+
+  it('rejects unknown answers, missing fields and extra fields', async () => {
+    const { cookie } = await bootstrap();
+    for (const payload of [{}, { answer: 'Так' }, { answer: demandAnswers[0], extra: true }]) {
+      const response = await app.inject({ method: 'POST', url: '/api/v1/demand-poll',
+        headers: { cookie, origin, 'content-type': 'application/json' }, payload });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: 'INVALID_INPUT' });
+    }
+    expect((await pool.query('SELECT 1 FROM demand_responses')).rowCount).toBe(0);
+  });
+
+  it('keeps the stored response across a repeated migration pass', async () => {
+    const { cookie } = await bootstrap();
+    expect((await submit(cookie, demandAnswers[2])).statusCode).toBe(200);
+    await migrateDirectory(pool, 'migrations/demand');
+    expect((await pool.query('SELECT answer FROM demand_responses')).rows).toEqual([{ answer: demandAnswers[2] }]);
+  });
+
+  it('enforces answer, poll and credential constraints in PostgreSQL', async () => {
+    await expect(pool.query('INSERT INTO demand_responses VALUES($1,$2,$3,$4)',
+      [demandPollId, 1, 'bad-hash', demandAnswers[0]])).rejects.toThrow();
+    await expect(pool.query('INSERT INTO demand_responses VALUES($1,$2,$3,$4)',
+      [demandPollId, 1, 'a'.repeat(64), 'Так'])).rejects.toThrow();
+    await expect(pool.query('INSERT INTO demand_responses VALUES($1,$2,$3,$4)',
+      ['other-poll', 1, 'a'.repeat(64), demandAnswers[0]])).rejects.toThrow();
+  });
+
+  it('does not set a browser credential or claim success when the database is unavailable', async () => {
+    const unavailablePool = new pg.Pool({ host: '127.0.0.1', port: 1, user: 'none', database: 'none', password: 'none', connectionTimeoutMillis: 100 });
+    const unavailableApp = await demandApp(unavailablePool, 'test', origin);
+    try {
+      const response = await unavailableApp.inject({ method: 'GET', url: '/api/v1/demand-poll' });
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toEqual({ error: 'REQUEST_FAILED' });
+      expect(response.headers['set-cookie']).toBeUndefined();
+    } finally { await unavailableApp.close(); }
+  });
+
+  it('has no public live-results route', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api/v1/demand-poll/results' });
+    expect(response.statusCode).toBe(404);
+  });
+});
+
+describe('demand Render configuration', () => {
+  const valid = {
+    OPENVOTE_ENVIRONMENT: 'demand',
+    OPENVOTE_PUBLIC_ORIGIN: 'https://openvote.com.ua',
+    PORT: '10000',
+    DEMAND_DATABASE_URL: 'postgresql://openvote_demand:synthetic-password@internal.example:5432/openvote_demand',
+  };
+
+  it('accepts only the exact minimal launch configuration', () => {
+    expect(parseDemandConfiguration(valid)).toEqual({ port: 10000, publicOrigin: 'https://openvote.com.ua', databaseUrl: valid.DEMAND_DATABASE_URL });
+  });
+
+  it.each([
+    { ...valid, OPENVOTE_ENVIRONMENT: 'demo' },
+    { ...valid, OPENVOTE_PUBLIC_ORIGIN: 'http://openvote.com.ua' },
+    { ...valid, PORT: '80' },
+    { ...valid, DEMAND_DATABASE_URL: 'postgresql://openvote_demand:password@internal.example:5432/other' },
+    { ...valid, DEMAND_DATABASE_URL: 'https://internal.example/openvote_demand' },
+  ])('rejects an invalid launch binding', environment => {
+    expect(() => parseDemandConfiguration(environment)).toThrow();
+  });
+});
