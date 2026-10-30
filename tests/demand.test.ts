@@ -44,7 +44,7 @@ afterAll(async () => {
 });
 
 describe('minimal demand poll', () => {
-  it('bootstraps one private browser credential and returns only the versioned public contract', async () => {
+  it('bootstraps one private browser credential and returns the zero-result public contract', async () => {
     const { response, cookie } = await bootstrap();
     expect(cookie).toMatch(new RegExp(`^${demandCredentialCookie}=[A-Za-z0-9_-]{43}$`));
     expect(response.headers['set-cookie']).toContain('HttpOnly');
@@ -54,9 +54,10 @@ describe('minimal demand poll', () => {
     expect(response.headers['set-cookie']).not.toContain('Secure');
     const status = DemandPollStatus.parse(response.json());
     expect(status).toEqual({ apiVersion: 'v1', pollId: demandPollId, version: 1, question: demandQuestion,
-      answers: demandAnswers, selfSelected: true, identityVerified: false, uniquePersonGuaranteed: false, response: null });
+      answers: demandAnswers, selfSelected: true, identityVerified: false, uniquePersonGuaranteed: false, response: null,
+      results: { totalResponses: 0, counts: [0, 0, 0] } });
     expect(response.body).not.toContain(cookie.split('=')[1] ?? 'missing');
-    expect(response.body).not.toMatch(/count|total|percentage/i);
+    expect(response.body).not.toMatch(/credential|hash|percentage/i);
   });
 
   it('sets Secure on the production-origin credential', async () => {
@@ -70,14 +71,17 @@ describe('minimal demand poll', () => {
     } finally { await secureApp.close(); }
   });
 
-  it('records one final answer and returns it after reload without exposing aggregate results', async () => {
+  it('records one final answer and returns the authoritative aggregate after submission and reload', async () => {
     const { cookie } = await bootstrap();
     const response = await submit(cookie, demandAnswers[0]);
     expect(response.statusCode).toBe(200);
-    expect(DemandResponseReceipt.parse(response.json())).toEqual({ recorded: true, answer: demandAnswers[0] });
+    expect(DemandResponseReceipt.parse(response.json())).toEqual({ recorded: true, answer: demandAnswers[0],
+      results: { totalResponses: 1, counts: [1, 0, 0] } });
     const reload = await app.inject({ method: 'GET', url: '/api/v1/demand-poll', headers: { cookie } });
-    expect(DemandPollStatus.parse(reload.json()).response).toEqual({ answer: demandAnswers[0] });
-    expect(reload.body).not.toMatch(/count|total|percentage/i);
+    const status = DemandPollStatus.parse(reload.json());
+    expect(status.response).toEqual({ answer: demandAnswers[0] });
+    expect(status.results).toEqual({ totalResponses: 1, counts: [1, 0, 0] });
+    expect(reload.body).not.toMatch(/credential|hash|percentage/i);
     const rows = await pool.query('SELECT poll_id,poll_version,credential_hash,answer FROM demand_responses');
     expect(rows.rows).toHaveLength(1);
     expect(rows.rows[0]).toEqual({ poll_id: demandPollId, poll_version: 1,
@@ -89,13 +93,34 @@ describe('minimal demand poll', () => {
     expect(columns.rows.map(row => row.column_name)).toEqual(['poll_id', 'poll_version', 'credential_hash', 'answer']);
   });
 
+  it('publishes exact counts for all three answers with a total equal to their sum', async () => {
+    const first = await bootstrap();
+    const second = await bootstrap();
+    const third = await bootstrap();
+    const fourth = await bootstrap();
+    expect((await submit(first.cookie, demandAnswers[0])).statusCode).toBe(200);
+    expect((await submit(second.cookie, demandAnswers[1])).statusCode).toBe(200);
+    expect((await submit(third.cookie, demandAnswers[1])).statusCode).toBe(200);
+    expect((await submit(fourth.cookie, demandAnswers[2])).statusCode).toBe(200);
+    const response = await app.inject({ method: 'GET', url: '/api/v1/demand-poll', headers: { cookie: first.cookie } });
+    const status = DemandPollStatus.parse(response.json());
+    expect(status.response).toEqual({ answer: demandAnswers[0] });
+    expect(status.results).toEqual({ totalResponses: 4, counts: [1, 2, 1] });
+    expect(status.results.counts.reduce((sum, count) => sum + count, 0)).toBe(status.results.totalResponses);
+    expect(response.body).not.toMatch(/credential|hash|percentage/i);
+  });
+
   it('treats the same final answer as idempotent and rejects a changed answer', async () => {
     const { cookie } = await bootstrap();
-    expect((await submit(cookie, demandAnswers[1])).statusCode).toBe(200);
-    expect((await submit(cookie, demandAnswers[1])).statusCode).toBe(200);
+    const first = await submit(cookie, demandAnswers[1]);
+    const repeated = await submit(cookie, demandAnswers[1]);
+    expect(DemandResponseReceipt.parse(first.json()).results).toEqual({ totalResponses: 1, counts: [0, 1, 0] });
+    expect(DemandResponseReceipt.parse(repeated.json()).results).toEqual({ totalResponses: 1, counts: [0, 1, 0] });
     const changed = await submit(cookie, demandAnswers[2]);
     expect(changed.statusCode).toBe(409);
     expect(changed.json()).toEqual({ error: 'FINAL_RESPONSE_ALREADY_RECORDED' });
+    const status = DemandPollStatus.parse((await app.inject({ method: 'GET', url: '/api/v1/demand-poll', headers: { cookie } })).json());
+    expect(status.results).toEqual({ totalResponses: 1, counts: [0, 1, 0] });
     const result = await pool.query<{ answer: string; count: string }>('SELECT min(answer) AS answer,count(*) FROM demand_responses');
     expect(result.rows[0]).toEqual({ answer: demandAnswers[1], count: '1' });
   });
@@ -104,6 +129,7 @@ describe('minimal demand poll', () => {
     const { cookie } = await bootstrap();
     const responses = await Promise.all(Array.from({ length: 10 }, () => submit(cookie, demandAnswers[0])));
     expect(responses.every(response => response.statusCode === 200)).toBe(true);
+    expect(responses.every(response => DemandResponseReceipt.parse(response.json()).results.totalResponses === 1)).toBe(true);
     expect((await pool.query('SELECT 1 FROM demand_responses')).rowCount).toBe(1);
   });
 
@@ -114,6 +140,9 @@ describe('minimal demand poll', () => {
     const stored = await pool.query<{ answer: string }>('SELECT answer FROM demand_responses');
     expect(stored.rows).toHaveLength(1);
     expect(demandAnswers).toContain(stored.rows[0]?.answer);
+    const status = DemandPollStatus.parse((await app.inject({ method: 'GET', url: '/api/v1/demand-poll', headers: { cookie } })).json());
+    expect(status.results.totalResponses).toBe(1);
+    expect(status.results.counts.reduce((sum, count) => sum + count, 0)).toBe(1);
   });
 
   it('rejects missing or malformed credentials without minting replacements', async () => {
@@ -182,7 +211,7 @@ describe('minimal demand poll', () => {
     } finally { await unavailableApp.close(); }
   });
 
-  it('has no public live-results route', async () => {
+  it('keeps the aggregate on the versioned poll route instead of adding a second route', async () => {
     const response = await app.inject({ method: 'GET', url: '/api/v1/demand-poll/results' });
     expect(response.statusCode).toBe(404);
   });

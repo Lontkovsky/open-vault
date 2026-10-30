@@ -7,6 +7,16 @@ export const demandAnswers = Answers;
 
 export const DemandAnswer = z.enum(demandAnswers);
 export const DemandResponse = z.strictObject({ answer: DemandAnswer });
+export const DemandPollResults = z.strictObject({
+  totalResponses: z.number().int().nonnegative(),
+  counts: z.tuple([
+    z.number().int().nonnegative(),
+    z.number().int().nonnegative(),
+    z.number().int().nonnegative(),
+  ]),
+}).refine(value => value.counts.reduce((sum, count) => sum + count, 0) === value.totalResponses, {
+  message: 'DEMAND_RESULT_TOTAL_MISMATCH',
+});
 export const DemandPollStatus = z.strictObject({
   apiVersion: z.literal('v1'),
   pollId: z.literal(demandPollId),
@@ -21,9 +31,14 @@ export const DemandPollStatus = z.strictObject({
   identityVerified: z.literal(false),
   uniquePersonGuaranteed: z.literal(false),
   response: DemandResponse.nullable(),
+  results: DemandPollResults,
 });
 export const DemandResponseSubmission = z.strictObject({ answer: DemandAnswer });
-export const DemandResponseReceipt = z.strictObject({ recorded: z.literal(true), answer: DemandAnswer });
+export const DemandResponseReceipt = z.strictObject({
+  recorded: z.literal(true),
+  answer: DemandAnswer,
+  results: DemandPollResults,
+});
 
 export type DemandAnswerType = z.infer<typeof DemandAnswer>;
 export type DemandPollStatusType = z.infer<typeof DemandPollStatus>;

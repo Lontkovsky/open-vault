@@ -1183,7 +1183,7 @@
       ],
       "acceptance": [
         "Minimal Blueprint and local vertical merge after focused tests, retained in-app Browser verification and exact-head CI",
-        "Each response row contains only poll ID/version, browser-credential hash and final answer; no live counts are public during collection",
+        "Each response row contains only poll ID/version, browser-credential hash and final answer; the public aggregate contains only total accepted responses and exact counts for the three established answers",
         "Owner confirms the exact Dashboard charge before paid resources are created",
         "Apex HTTPS and recorded state survive an actual Render restart after deployment"
       ],
