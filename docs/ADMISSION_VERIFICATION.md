@@ -38,4 +38,4 @@ pnpm test
 pnpm verify artifacts/reference/election.bel
 ```
 
-Public results are recorded in `artifacts/reference/reference-report.json` and `artifacts/services/tests.json`. The Browser run and its unresolved download gate are documented separately in `artifacts/e2e/README.md` and `docs/PROGRESS.md`. Passing these checks is not an external review or completion of the development release.
+Public results are recorded in `artifacts/reference/reference-report.json` and `artifacts/services/tests.json`. Final-source Browser run `dadf885395` separately passed all 14 stages / 38 assertions and offline verification of its downloaded native archive; `artifacts/e2e/README.md` and `docs/PROGRESS.md` record that compatibility evidence. Passing these checks is not an external review or completion of the development release.
