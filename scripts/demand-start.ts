@@ -20,7 +20,7 @@ export function parseDemandConfiguration(environment: NodeJS.ProcessEnv): Demand
   const databaseUrl = z.string().min(1).parse(environment.DEMAND_DATABASE_URL);
   let parsed: URL;
   try { parsed = new URL(databaseUrl); } catch { return fail('DEMAND_DATABASE_URL_INVALID'); }
-  if (parsed.protocol !== 'postgresql:' || parsed.hostname === '' || parsed.port === '' || parsed.username === '' ||
+  if (parsed.protocol !== 'postgresql:' || parsed.hostname === '' || parsed.username === '' ||
       parsed.password === '' || decodeURIComponent(parsed.pathname) !== '/openvote_demand' || parsed.search !== '' || parsed.hash !== '') {
     return fail('DEMAND_DATABASE_URL_INVALID');
   }

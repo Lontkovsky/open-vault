@@ -200,6 +200,11 @@ describe('demand Render configuration', () => {
     expect(parseDemandConfiguration(valid)).toEqual({ port: 10000, publicOrigin: 'https://openvote.com.ua', databaseUrl: valid.DEMAND_DATABASE_URL });
   });
 
+  it('accepts the Render internal URL with the default PostgreSQL port', () => {
+    const environment = { ...valid, DEMAND_DATABASE_URL: 'postgresql://openvote_demand:synthetic-password@internal.example/openvote_demand' };
+    expect(parseDemandConfiguration(environment)).toEqual({ port: 10000, publicOrigin: 'https://openvote.com.ua', databaseUrl: environment.DEMAND_DATABASE_URL });
+  });
+
   it.each([
     { ...valid, OPENVOTE_ENVIRONMENT: 'demo' },
     { ...valid, OPENVOTE_PUBLIC_ORIGIN: 'http://openvote.com.ua' },
