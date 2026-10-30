@@ -154,10 +154,12 @@
         "https://github.com/Lontkovsky/openvote/issues/24",
         "https://github.com/Lontkovsky/openvote/issues/26",
         "https://github.com/Lontkovsky/openvote/issues/29",
-        "https://github.com/Lontkovsky/openvote/issues/59"
+        "https://github.com/Lontkovsky/openvote/issues/59",
+        "https://github.com/Lontkovsky/openvote/issues/62"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/openvote/pull/60"
+        "https://github.com/Lontkovsky/openvote/pull/60",
+        "https://github.com/Lontkovsky/openvote/pull/63"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",

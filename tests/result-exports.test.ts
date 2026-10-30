@@ -46,6 +46,8 @@ describe('one public result contract', () => {
     const decoded = z.object({ contract: ResultContract, title: z.string(), text: z.string(), tags: z.array(z.string()), attributes: z.array(z.string()) }).parse(parse('svg', resultSvg(expected)));
     expect(decoded.contract).toEqual(expected);
     expect(decoded.title).toBe(question);
+    expect(decoded.text).toContain('OpenVote · ТЕСТОВІ ДАНІ');
+    expect(decoded.text).not.toContain('ВІДКРИТИЙ ГОЛОС');
     expect(decoded.tags.every(tag => ['svg', 'title', 'desc', 'metadata', 'rect', 'g', 'text', 'tspan'].some(allowed => tag === '{http://www.w3.org/2000/svg}' + allowed))).toBe(true);
     expect(decoded.attributes.some(key => /^(on|href|src)/.test(key))).toBe(false);
     for (const text of ['N = 3', 'Підтримую: 1 · 33,3%', 'Не підтримую: 1 · 33,3%', 'Утримуюсь: 1 · 33,3%', 'Published', 'ReferenceVerified', result.opensAt, result.closesAt]) expect(decoded.text).toContain(text);

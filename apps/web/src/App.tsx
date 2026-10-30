@@ -6,6 +6,7 @@ import { request } from './api.ts';
 import { PollPage, stateNames } from './PollPage.tsx';
 import { Identity } from './Identity.tsx';
 import { DraftEditor, MyPolls, ReviewQueue } from './Workspace.tsx';
+import openVoteMark from './assets/openvote-mark.svg';
 
 export function App() {
   const [route, setRoute] = useState(location.hash);
@@ -33,7 +34,7 @@ export function App() {
   return <>
     <a className="skip" href="#main">До основного вмісту</a>
     <div className="environment"><span className="status-dot" /> Публічний синтетичний demo-режим <span>Справжні документи не приймаються</span></div>
-    <header className="site-header"><a className="brand" href="#/"><span className="brand-mark">вг</span><span>Відкритий голос<small>Незалежна платформа</small></span></a>
+    <header className="site-header"><a className="brand" href="#/" aria-label="OpenVote — на початок сторінки"><span className="brand-mark" aria-hidden="true"><img src={openVoteMark} alt="" /></span><span>OpenVote<small>Незалежна платформа</small></span></a>
       <nav aria-label="Основна навігація"><a href="#/" aria-current={!route || route === '#/' ? 'page' : undefined}>Голосування</a><a href="#/trust">Центр довіри</a><a href="#/help">Довідка</a></nav>
       {auth === null ? <a className="button secondary" href="#/identity">Підтвердити участь</a> : <div className="account-actions"><a href="#/mine">Мої питання</a>{auth.role === 'moderator' && <a href="#/moderation">Модерація</a>}<button className="secondary" onClick={() => { void request('identity', '/v1/session', 'DELETE', undefined, auth.token).then(() => { setAuth(null); location.hash = '#/'; }).catch((e: Error) => setError(e.message)); }}>Вийти</button></div>}</header>
     <main id="main">
@@ -50,7 +51,7 @@ export function App() {
         <div className="catalog-tools"><label className="search">Пошук питань<input type="search" value={query} onChange={e => setQuery(e.target.value)} /></label><label>Категорія<select value={category} onChange={e => setCategory(e.target.value)}><option value="">Усі категорії</option>{Categories.map(c => <option key={c}>{c}</option>)}</select></label></div>
         <div className="catalog-layout"><section aria-label="Каталог голосувань"><div className="section-line"><h2>Каталог</h2><span>Новіші спочатку</span></div>{loading ? <p role="status">Завантаження голосувань…</p> : error ? <div className="notice error" role="alert">Не вдалося завантажити каталог: {error}</div> : polls.length === 0 ? <div className="empty"><span className="empty-symbol">+</span><h2>Питань ще немає</h2><p>{query || category ? 'За цими умовами голосувань не знайдено.' : 'Створіть першу пропозицію після підтвердження тестової особи.'}</p></div> : <div className="poll-list">{polls.map(poll => <article className="poll-card" key={poll.id}><div className="card-top"><span className="category">{poll.content.category}</span><span className="state">{stateNames[poll.state]}</span></div><h2><a href={`#/poll/${poll.id}`}>{poll.content.question}</a></h2><p>{poll.content.context}</p><div className="card-bottom"><span>{poll.content.authorAlias}</span><span>{policyText(poll.content.policy)}</span></div></article>)}</div>}</section>
           <aside className="principles"><span className="eyebrow">ПЕРШ НІЖ ГОЛОСУВАТИ</span><h2>Одна людина.<br />Один врахований голос.</h2><p>Зміна пристрою чи провайдера не збільшує вагу учасника.</p><div className="rule" /><h3>Результат про учасників</h3><p>Добровільний самовідбір не робить голосування репрезентативним опитуванням населення.</p><a href="#/trust">Межі гарантій <span aria-hidden="true">↗</span></a></aside></div></>}
-    </main><footer><span>Відкритий голос · Відкритий код AGPL-3.0</span><span>Не державний сервіс. Не офіційні вибори.</span><a href="https://github.com/Lontkovsky/openvote">GitHub ↗</a></footer>
+    </main><footer><span>OpenVote · Відкритий код AGPL-3.0</span><span>Не державний сервіс. Не офіційні вибори.</span><a href="https://github.com/Lontkovsky/openvote">GitHub ↗</a></footer>
   </>;
 }
 

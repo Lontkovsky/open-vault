@@ -43,7 +43,7 @@ export function resultSvg(input: ResultType): string {
     }).join('')}</text>`);
     y += 16;
   }
-  paragraph('ВІДКРИТИЙ ГОЛОС · ТЕСТОВІ ДАНІ', 20, 700, '#28583e');
+  paragraph('OpenVote · ТЕСТОВІ ДАНІ', 20, 700, '#28583e');
   paragraph(result.question, 30, 700);
   paragraph(`Версія ${result.version} · ${result.pollId}`, 20);
   paragraph(`N = ${result.acceptedVotes} учасників цього голосування`, 28, 700);

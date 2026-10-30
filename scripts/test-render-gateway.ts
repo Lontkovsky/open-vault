@@ -53,7 +53,7 @@ try {
   if (!ready) throw new Error('GATEWAY_READINESS_FAILED');
 
   const page = await gateway('openvote.com.ua', '/');
-  if (page.status !== 200 || !page.body.includes('Відкритий голос')) throw new Error('GATEWAY_SPA_FAILED');
+  if (page.status !== 200 || !page.body.includes('OpenVote')) throw new Error('GATEWAY_SPA_FAILED');
   for (const upstream of upstreams) {
     const response = await gateway(`${upstream.role}.openvote.com.ua`, '/v1/synthetic-check');
     const body: unknown = JSON.parse(response.body);

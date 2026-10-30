@@ -2,7 +2,7 @@ previews:
   generation: off
 
 projects:
-  - name: Open Vote
+  - name: OpenVote
     environments:
       - name: production
         services:
