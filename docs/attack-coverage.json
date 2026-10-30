@@ -158,7 +158,8 @@
         "https://github.com/Lontkovsky/openvote/issues/62"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/openvote/pull/60"
+        "https://github.com/Lontkovsky/openvote/pull/60",
+        "https://github.com/Lontkovsky/openvote/pull/63"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
