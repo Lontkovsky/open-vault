@@ -2,19 +2,19 @@ import { useEffect, useState } from 'react';
 import { demandQuestion } from '../../../packages/domain/src/demand.ts';
 import type { DemandAnswerType, DemandPollStatusType } from '../../../packages/domain/src/demand.ts';
 import { DemandApiFailure, loadDemandPoll, recordDemandResponse } from './demand-api.ts';
+import openVoteMark from './assets/openvote-mark.svg';
 import walkthroughPoster from './assets/platform-walkthrough-poster.jpg';
 import walkthroughVideo from './assets/platform-walkthrough.mp4';
 
 function errorText(error: unknown): string {
   if (error instanceof DemandApiFailure) {
-    if (error.message === 'FINAL_RESPONSE_ALREADY_RECORDED') return 'У цьому браузері вже збережено іншу остаточну відповідь. Нову відповідь не прийнято.';
-    if (error.message === 'DEMAND_CREDENTIAL_REQUIRED') return 'Технічний ідентифікатор цього браузера відсутній. Відповідь не надіслано.';
-    if (error.message === 'INVALID_DEMAND_CREDENTIAL') return 'Технічний ідентифікатор цього браузера пошкоджено. Відповідь не надіслано.';
-    if (error.message === 'ORIGIN_REJECTED') return 'Запит надіслано не з дозволеної адреси. Відповідь не збережено.';
-    return `Сервіс відхилив запит: ${error.message}. Відповідь не підтверджено.`;
+    if (error.message === 'FINAL_RESPONSE_ALREADY_RECORDED') return 'Попередню остаточну відповідь уже прийнято. Нову відповідь не прийнято.';
+    if (error.message === 'DEMAND_CREDENTIAL_REQUIRED') return 'Не вдалося підтвердити сесію. Відповідь не надіслано.';
+    if (error.message === 'INVALID_DEMAND_CREDENTIAL') return 'Не вдалося підтвердити сесію. Відповідь не надіслано.';
+    if (error.message === 'ORIGIN_REJECTED') return 'Не вдалося перевірити запит. Відповідь не надіслано.';
+    return 'Не вдалося прийняти відповідь. Спробуйте ще раз.';
   }
-  if (error instanceof Error && error.name === 'TimeoutError') return 'Сервіс не відповів вчасно. Збереження відповіді не підтверджено.';
-  return 'Не вдалося зв’язатися із сервісом. Збереження відповіді не підтверджено.';
+  return 'Відповідь не надіслано. Спробуйте ще раз.';
 }
 
 export function DemandApp() {
@@ -52,19 +52,19 @@ export function DemandApp() {
   return <div className="demand-page">
     <a className="skip" href="#main">До основного вмісту</a>
     <header className="demand-header">
-      <a className="brand" href="#top" aria-label="Відкритий голос — на початок сторінки"><span className="brand-mark">вг</span><span>Відкритий голос<small>Незалежна платформа</small></span></a>
+      <a className="brand" href="#top" aria-label="OpenVote — на початок сторінки"><span className="brand-mark" aria-hidden="true"><img src={openVoteMark} alt="" /></span><span>OpenVote<small>Незалежна платформа</small></span></a>
       <a className="button primary" href="#poll">Проголосувати</a>
     </header>
     <main id="main" className="demand-main">
       <section className="demand-hero" id="top">
-        <div className="demand-hero-copy"><p className="eyebrow">ВІДКРИТЕ ОПИТУВАННЯ</p><h1>{demandQuestion}</h1><p className="demand-lead">Допоможіть вирішити, чи варто розвивати платформу для незалежних відкритих голосувань.</p><a className="button primary" href="#poll">Проголосувати</a></div>
+        <div className="demand-hero-copy"><p className="eyebrow">ВІДКРИТЕ ОПИТУВАННЯ</p><h1>{demandQuestion}</h1><p className="demand-lead">Допоможіть вирішити, чи варто розвивати платформу для незалежних відкритих голосувань.</p></div>
       </section>
 
       <section className="demand-poll-section" id="poll" aria-labelledby="poll-title">
-        <div className="demand-poll-copy"><p className="eyebrow">ВАШ ГОЛОС</p><h2 id="poll-title">Оберіть одну відповідь</h2><p>Після підтвердження змінити її в цьому браузері не можна.</p><div className="demand-methodology"><p><strong>Важливо.</strong> Участь добровільна. Ми не перевіряємо особу чи громадянство, а в іншому браузері можна відповісти ще раз. Результати показують відповіді, а не кількість унікальних людей чи думку українців загалом.</p><p>Форма не запитує ім’я, документи або контакти.</p></div></div>
+        <div className="demand-poll-copy"><p className="eyebrow">ВАШ ГОЛОС</p><h2 id="poll-title">Оберіть одну відповідь</h2><div className="demand-methodology"><p>Участь добровільна. Опитування не перевіряє особу, громадянство або унікальність учасників, тому результати не відображають думку українців загалом.</p></div></div>
         <div className="demand-poll-card">
           {loading ? <p role="status">Завантаження опитування…</p> : poll === null ? <div className="notice error" role="alert">{error}</div> : <>
-            {recorded !== null ? <div className="demand-success" role="status"><span aria-hidden="true">✓</span><p className="eyebrow">ВІДПОВІДЬ ПРИЙНЯТО</p><h2>Дякуємо. Відповідь збережено.</h2><p>Ваш остаточний вибір у цьому браузері: <strong>{recorded}</strong>.</p></div> : <form onSubmit={event => { event.preventDefault(); void submit(); }}><fieldset disabled={busy}><legend>{poll.question}</legend><div className="demand-answers">{poll.answers.map(answer => <label className="choice" key={answer}><input type="radio" name="demand-answer" checked={selected === answer} onChange={() => { setSelected(answer); setConfirmed(false); }} />{answer}</label>)}</div></fieldset>{selected !== null && <label className="choice demand-confirm"><input type="checkbox" checked={confirmed} disabled={busy} onChange={event => setConfirmed(event.target.checked)} />Підтверджую остаточну відповідь: «{selected}».</label>}{error !== null && <p className="notice error" role="alert">{error}</p>}<button className="primary" type="submit" disabled={selected === null || !confirmed || busy}>{busy ? 'Надсилання…' : 'Надіслати відповідь'}</button></form>}
+            {recorded !== null ? <div className="demand-success" role="status"><span aria-hidden="true">✓</span><h2>Дякуємо за ваш голос.</h2></div> : <form onSubmit={event => { event.preventDefault(); void submit(); }}><fieldset disabled={busy}><legend>{poll.question}</legend><div className="demand-answers">{poll.answers.map(answer => <label className="choice" key={answer}><input type="radio" name="demand-answer" checked={selected === answer} onChange={() => { setSelected(answer); setConfirmed(false); }} />{answer}</label>)}</div></fieldset>{selected !== null && <label className="choice demand-confirm"><input type="checkbox" checked={confirmed} disabled={busy} onChange={event => setConfirmed(event.target.checked)} />Підтверджую вибір: «{selected}».</label>}{error !== null && <p className="notice error" role="alert">{error}</p>}<button className="primary" type="submit" disabled={selected === null || !confirmed || busy}>{busy ? 'Надсилання…' : 'Надіслати відповідь'}</button></form>}
             <section className="demand-results" aria-labelledby="demand-results-title">
               <h3 id="demand-results-title">Поточні результати</h3>
               <p className="demand-results-total">Всього відповідей: <strong>{poll.results.totalResponses}</strong></p>
@@ -82,6 +82,6 @@ export function DemandApp() {
         </div>
       </section>
     </main>
-    <footer><span>Відкритий голос · Відкритий код AGPL-3.0</span><span>Не державний сервіс. Не офіційне голосування.</span><a href="https://github.com/Lontkovsky/openvote">GitHub ↗</a></footer>
+    <footer><span>OpenVote · Відкритий код AGPL-3.0</span><span>Не державний сервіс. Не офіційне голосування.</span><a href="https://github.com/Lontkovsky/openvote">GitHub ↗</a></footer>
   </div>;
 }
