@@ -7,5 +7,5 @@ for (const origin of origins) {
   console.log(status.role + ': healthy in ' + status.environment);
 }
 const page = await fetch('http://localhost:5173/', { signal: AbortSignal.timeout(5000) });
-if (!page.ok || !(await page.text()).includes('Відкритий голос')) throw new Error('WEB_UNAVAILABLE');
+if (!page.ok || !(await page.text()).includes('OpenVote')) throw new Error('WEB_UNAVAILABLE');
 console.log('Web page: reachable; this HTTP check does not replace in-app Browser verification.');

@@ -48,7 +48,7 @@ The future full-platform cutover reuses the same `openvote` service and disk: sw
 
 ## Deployed resources and DNS
 
-The approved Blueprint is deployed in the `Open Vote` project as one `openvote` web service. `openvote-demand` is active; `openvote-identity`, `openvote-ballot` and `openvote-management` are suspended. The 1 GB disk is attached at `/app/.runtime-disk` but the demand application does not use it.
+The approved Blueprint is deployed in the `OpenVote` project as one `openvote` web service. `openvote-demand` is active; `openvote-identity`, `openvote-ballot` and `openvote-management` are suspended. The 1 GB disk is attached at `/app/.runtime-disk` but the demand application does not use it.
 
 The Ukraine.com.ua zone was exported before the approved DNS change. The apex uses Render's `216.24.57.1`; `www` is a CNAME to `openvote-launch.onrender.com.` because Render service slugs are immutable even after a display-name change. Mail, SPF and the unrelated wildcard record remain unchanged. Render serves a valid certificate for the apex and redirects `https://www.openvote.com.ua/` to the canonical apex over HTTPS.
 
