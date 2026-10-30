@@ -176,7 +176,7 @@
         "artifacts/e2e/share.svg",
         "docs/PROGRESS.md"
       ],
-      "remainingAcceptanceCriteria": "Issue #26 implemented and merged after CI. Issue #59 still requires exact-head CI and hosted HTTPS verification. Third-party misrepresentation remains outside platform control."
+      "remainingAcceptanceCriteria": "Issue #26 implemented and merged after CI. Third-party misrepresentation remains outside platform control."
     },
     {
       "id": "A06",
