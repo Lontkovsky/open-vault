@@ -82,7 +82,8 @@
         "https://github.com/Lontkovsky/vidkrytyi-holos/issues/33"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/42"
+        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/42",
+        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/48"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -90,14 +91,17 @@
       "verification": [
         "tests/services.test.ts",
         "tests/trustees.test.ts",
-        "tools/test_reference.py"
+        "tools/test_reference.py",
+        "tests/e2e/inapp.mjs"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
         "artifacts/reference/reference-report.json",
+        "artifacts/e2e/report.json",
+        "artifacts/e2e/verification.json",
         "docs/TRUSTEE_VERIFICATION.md"
       ],
-      "remainingAcceptanceCriteria": "Full current service/Browser verification and PR CI pending; independently retained acknowledgement journal and first-fork completeness remain open; key-collusion and identity-linkage experiments remain separate work"
+      "remainingAcceptanceCriteria": "Final-head PR CI pending; independently retained acknowledgement journal and first-fork completeness remain open; key-collusion and identity-linkage experiments remain separate work"
     },
     {
       "id": "A04",

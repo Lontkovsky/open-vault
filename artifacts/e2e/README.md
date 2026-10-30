@@ -1,5 +1,7 @@
 # Browser evidence status
 
-`report.json` records the latest attempt, `d95f96c3f6`, which passed the first nine stages and 18 assertions, including native 1/1/1 publication, then failed while waiting for the first JSON download. The current in-app Browser did not save that file in the previously configured Downloads directory. Separate Blob and plain HTTP download diagnostics also produced no file there. It is not a passing end-to-end run.
+`report.json` records current run `7f67776650`: all 14 stages / 38 assertions passed with coordinator exit 0. Initial and final source digest are both `34bc4ab66289391cd8b03775b5c1004e97a90f2ff8d40d70df088e6aa5e1425c`; the run finished at 2026-10-30T14:21:45.028Z. The retained existing in-app Browser tab exercised the full synthetic voting, export and provider-recovery flow.
 
-No exports were obtained in that attempt. The adjacent result JSON/CSV/SVG, native archive and verification report belong to the earlier completed run `3e69dc6d08` (native election `djz6Qgu7Yr2wSY`, PR #47). They are historical evidence, not verification of the current change. A fresh complete Browser run with functioning file downloads is required before merging the trustee-intake change.
+The adjacent result JSON/CSV/SVG and native archive all belong to that run (native election `FuUyTkqdp3Z4rY`). Each export was obtained through its real UI control after arming the existing Browser download event; no production download code or alternate browser was used. `verification.json` records separate Belenios 3.3.0 verification of the downloaded archive: three ballots, closed status and `[[1,1,1]]`.
+
+This is local development evidence, not external review or production readiness. PR #48 still requires successful CI on its final pushed head. Independently retained acknowledgement history, key-holder collusion and the complete privacy leak/reconstruction matrix remain open.
