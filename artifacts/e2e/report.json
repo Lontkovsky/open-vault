@@ -1,11 +1,11 @@
 {
-  "runId": "3e69dc6d08",
-  "sourceHash": "60f66bccb46b72e18bc239f0eeae041e714e15a66256b74c94a67086d734b03a",
-  "finalSourceHash": "60f66bccb46b72e18bc239f0eeae041e714e15a66256b74c94a67086d734b03a",
+  "runId": "7f67776650",
+  "sourceHash": "34bc4ab66289391cd8b03775b5c1004e97a90f2ff8d40d70df088e6aa5e1425c",
+  "finalSourceHash": "34bc4ab66289391cd8b03775b5c1004e97a90f2ff8d40d70df088e6aa5e1425c",
   "browser": "Existing in-app Browser; supplied tab.playwright binding",
   "standaloneBrowserStarted": false,
-  "startedAt": "2026-09-06T19:42:16.283Z",
-  "finishedAt": "2026-09-06T19:49:32.831Z",
+  "startedAt": "2026-10-30T14:16:42.210Z",
+  "finishedAt": "2026-10-30T14:21:45.028Z",
   "passed": true,
   "results": [
     {
@@ -85,6 +85,7 @@
       "status": "Passed",
       "assertions": [
         "Trust center discloses the independent observer and the split-view comparison condition",
+        "Participation policy explains that the minimum group threshold does not hide an unanimous choice",
         "Anonymous public results and real JSON, CSV, SVG and audit downloads share the exact contract",
         "CSV independently round-trips all fields and types",
         "Keyboard opens and closes the rendered share card",

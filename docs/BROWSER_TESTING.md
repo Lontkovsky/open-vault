@@ -1,6 +1,6 @@
 # Existing in-app Browser E2E
 
-`pnpm test:e2e /absolute/download/directory` is a local coordinator. Supply the actual download directory configured for the existing Browser. It starts no browser, opens no CDP port and cannot pass from a previous report. Start `pnpm dev` first and keep the existing in-app Browser tab open. The command deletes only prior E2E poll IDs recorded in private `.runtime/e2e-polls.json`, after verifying their test-author marker. It does not delete the seed poll or arbitrary user content.
+`pnpm test:e2e` is a local coordinator. It starts no browser, opens no CDP port and cannot pass from a previous report. Start `pnpm dev` first and keep the existing in-app Browser tab open. The command deletes only prior E2E poll IDs recorded in private `.runtime/e2e-polls.json`, after verifying their test-author marker. It does not delete the seed poll or arbitrary user content.
 
 In the in-app Browser tool runtime, keep the existing tab binding and import the checked-in test module:
 
@@ -25,13 +25,32 @@ Execute each stage with `await suite.step(name)` in this order:
 13. `providerSwitch`
 14. `providerBothUnavailable`
 
+## Verification checklist
+
+| Case | Prerequisite | Expected result | Baseline run `92387c0df2` | Verified run `7f67776650` |
+|---|---|---|---|---|
+| Create | Healthy local services and synthetic providers | Structured versioned draft enters Review | Passed | Passed |
+| Review start | Moderator synthetic identity | Complete rubric and reason are submitted | Passed | Passed |
+| Review completion | Finished provisioning ceremony | Immutable poll opens | Passed | Passed after the visible completion status appeared |
+| First vote | Committed synthetic person | Browser ciphertext, signed receipt and inclusion succeed | Passed | Passed |
+| Second vote | Different person through provider B | Opposing ciphertext is accepted once | Passed | Passed |
+| Third vote | Third committed person | Abstention is accepted and included in N | Passed | Passed |
+| Duplicate | First person through the other provider | Different final vote is rejected | Passed | Passed |
+| Tally start | Fixed deadline reached | Poll closes without deadline change and threshold tally starts | Passed | Passed |
+| Publication | Native tally completed | Published result is exactly 1/1/1 with N=3 | Passed | Passed |
+| Exports | Signed-out published poll and Browser download event armed before each click | New JSON, CSV, SVG and audit files share one contract; archive is extracted unchanged | Failed: directory polling after an unarmed click produced no file; arming `waitForEvent("download")` before the same JSON click returned the actual saved path | Passed for JSON, CSV, SVG and audit; extracted archive passed separate native verification |
+| Provider contracts | Signed-out identity page | Mock capabilities and disabled production adapters are keyboard-visible | Not run after export failure | Passed |
+| Provider retry | Provider A controlled unavailable then restored | The same attempt recovers without duplication | Not run after export failure | Passed |
+| Provider switch | A unavailable and B explicitly selected | The same person receives no second right | Not run after export failure | Passed |
+| Both unavailable | A and B controlled unavailable | Participation remains unavailable and both statuses recover after reset | Not run after export failure | Passed |
+
 Asynchronous review/tally start and completion are separate stages. Wait for real completion; do not change the fixed deadline or insert fabricated outcomes. Every browser action uses the supplied tab.playwright API. Public UI state is inspected after actions; no browser secrets or hidden application state are read. The native cryptographic tract is exercised, not mocked.
 
 The four provider stages additionally use the private local coordinator to set A/B mock availability and count active attempts for the one fixed synthetic fixture. They do not authenticate through that control channel: login, error, retry, switching, capability disclosure and result navigation all execute through the UI. The attempt-count check returns only a count and proves that repeated failed deliveries did not create new attempts. Both mock processes are reset at setup and completion/interruption. Run live service tests before this suite, not concurrently, because they deliberately control the same synthetic providers.
 
 The coordinator returns a nonzero exit code if a stage fails, sources change during the run, the run is interrupted, or it remains incomplete for 15 minutes. Safe outcomes are written to `artifacts/e2e/report.json` with run ID and initial/final source digests. The report starts as incomplete; an older successful report cannot survive a new failed attempt. A successful CLI/API test is not browser evidence. The regular GitHub workflow does not claim to run this suite because it does not have the existing in-app Browser session.
 
-The export stage clicks the real UI and reads only newly completed files in the explicitly supplied download directory. It compares the actual downloaded question/version/counts/deadline with the scenario and extracts the unchanged native archive to `artifacts/e2e/election.bel`. Run `pnpm verify artifacts/e2e/election.bel` separately for native proof verification. This separation does not claim that JSON shape proves a tally. The Browser download-event wait timed out in a diagnostic run even though the file was saved with the correct contents; that run remains failed. No alternate browser or direct API download is used to replace the UI action.
+The export stage arms the existing Browser's download event before each real UI click and reads the completed path returned by that event. It validates the expected filename and compares the actual downloaded question/version/counts/deadline with the scenario, then extracts the unchanged native archive to `artifacts/e2e/election.bel`. Run `pnpm verify artifacts/e2e/election.bel` separately for native proof verification. This separation does not claim that JSON shape proves a tally. Run `92387c0df2` confirmed that an unarmed click followed by directory polling produced no file, while arming `waitForEvent("download")` before the same JSON click returned the saved file path. No production download code, alternate browser or direct API download is used to replace the UI action.
 
 Exports are exercised after signing out. JSON, CSV, SVG and audit downloads must contain the same complete result contract. The test uses Python standard-library CSV/XML parsers on the actual downloaded files, checks the visible result question, opens/closes the share preview by keyboard, verifies that the SVG image loaded, and retains the CSV/SVG as safe public evidence.
 

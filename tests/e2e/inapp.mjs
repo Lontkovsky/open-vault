@@ -1,5 +1,5 @@
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { basename } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
 
@@ -32,15 +32,12 @@ export async function createRunner(tab) {
   async function control(provider, available) { await fixture('/provider-control', { provider, available }); }
   async function unavailable() { await p.getByRole('alert').filter({ hasText: 'Провайдер недоступний.' }).waitFor({ state: 'visible' }); }
   async function exported(button, prefix, extension) {
-    const before = new Set(await readdir(run.downloadDirectory));
+    const waiting = p.waitForEvent('download', { timeoutMs: 30000 });
     await click('button', button);
-    let path;
-    await until(async () => {
-      const files = (await readdir(run.downloadDirectory)).filter(name => !before.has(name) && name.startsWith(prefix) && name.endsWith(extension));
-      if (files.length > 1) throw new Error('AMBIGUOUS_DOWNLOADED_ARTIFACT');
-      if (files.length === 0) return false;
-      path = join(run.downloadDirectory, files[0]); return true;
-    }, 'New completed ' + prefix + ' download');
+    const path = await (await waiting).path({ timeoutMs: 30000 });
+    if (path === null) throw new Error('DOWNLOADED_ARTIFACT_PATH_UNAVAILABLE');
+    const name = basename(path);
+    if (!name.startsWith(prefix) || !name.endsWith(extension)) throw new Error('DOWNLOADED_ARTIFACT_NAME_MISMATCH');
     return readFile(path, 'utf8');
   }
   function parseExport(format, text) {
@@ -106,6 +103,7 @@ export async function createRunner(tab) {
     async reviewStart(assertions) {
       await signOut(); await click('link', 'Підтвердити участь'); await signIn('TEST-PERSON-0012', 'A');
       await click('link', 'Модерація');
+      await visible('link', title);
       const form = p.locator('form').filter({ has: p.getByRole('link', { name: title, exact: true }) });
       if (await form.count() !== 1) throw new Error('REVIEW_CARD_NOT_UNIQUE');
       for (const label of ['Одна пропозиція без навідного формулювання', 'Без подвійного заперечення', 'Терміни зрозумілі', 'Умови й істотні наслідки явні', 'Факти відокремлені від оцінок']) { await form.getByLabel(label, { exact: true }).check(); await state(); }
@@ -178,6 +176,8 @@ export async function createRunner(tab) {
       await p.getByText('Суперечливі історії виявляються після обміну свідченнями.', { exact: false }).waitFor({ state: 'visible' });
       await openPoll();
       assertions.push('Trust center discloses the independent observer and the split-view comparison condition');
+      await p.getByText('За одностайного результату відомий факт участі розкриває відповідь учасника.', { exact: false }).waitFor({ state: 'visible' });
+      assertions.push('Participation policy explains that the minimum group threshold does not hide an unanimous choice');
       assertions.push('Anonymous public results and real JSON, CSV, SVG and audit downloads share the exact contract', 'CSV independently round-trips all fields and types', 'Keyboard opens and closes the rendered share card', 'Share card retains exact question, N and all answer counts', 'Native archive extracted unchanged from the downloaded audit for offline verification', 'Tracker still included after publication', 'Self-selection and representativeness warning stays visible');
     },
     async providerContracts(assertions) {

@@ -1,15 +1,12 @@
 import { createServer } from 'node:http';
 import { createHash, randomBytes } from 'node:crypto';
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { isAbsolute } from 'node:path';
 import { z } from 'zod';
 import { cleanupBrowserFixtures } from '../tests/support/cleanup.ts';
 import { database, readConfig } from '../apps/api/src/common.ts';
 
 const steps = ['create', 'reviewStart', 'review', 'voteOne', 'voteTwo', 'voteThree', 'duplicate', 'tallyStart', 'publish', 'exports', 'providerContracts', 'providerRetry', 'providerSwitch', 'providerBothUnavailable'];
-const downloadDirectory = process.argv[2];
-if (process.argv.length !== 3 || typeof downloadDirectory !== 'string' || !isAbsolute(downloadDirectory)) throw new Error('Supply the existing Browser download directory: pnpm test:e2e /absolute/download/directory');
-await readdir(downloadDirectory);
+if (process.argv.length !== 2) throw new Error('Run without arguments: pnpm test:e2e');
 const token = randomBytes(32).toString('hex'), runId = randomBytes(5).toString('hex');
 await mkdir('artifacts/e2e', { recursive: true });
 await writeFile('artifacts/e2e/report.json', JSON.stringify({ runId, passed: false, failure: 'Run setup has not completed' }, null, 2) + '\n');
@@ -38,7 +35,7 @@ async function sourceDigest() {
 const sourceHash = await sourceDigest();
 await mkdir('.runtime', { recursive: true, mode: 0o700 });
 const closesAt = new Date(Math.floor(Date.now() / 60000) * 60000 + 300000).toISOString();
-await writeFile('.runtime/e2e-run.json', JSON.stringify({ endpoint: 'http://127.0.0.1:4329', token, runId, sourceHash, closesAt, downloadDirectory }), { mode: 0o600 });
+await writeFile('.runtime/e2e-run.json', JSON.stringify({ endpoint: 'http://127.0.0.1:4329', token, runId, sourceHash, closesAt }), { mode: 0o600 });
 const results = [];
 let finished = false;
 const startedAt = new Date().toISOString();
