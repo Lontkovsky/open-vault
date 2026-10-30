@@ -23,7 +23,8 @@
       ],
       "prs": [
         "https://github.com/Lontkovsky/vidkrytyi-holos/pull/42",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/49"
+        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/49",
+        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/50"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -51,7 +52,8 @@
       "issues": [
         "https://github.com/Lontkovsky/vidkrytyi-holos/issues/19",
         "https://github.com/Lontkovsky/vidkrytyi-holos/issues/20",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/31"
+        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/31",
+        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/41"
       ],
       "prs": [
         "https://github.com/Lontkovsky/vidkrytyi-holos/pull/42",

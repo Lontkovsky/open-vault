@@ -289,9 +289,21 @@ describe('real service boundaries', () => {
         expect((await identity.inject({ method: 'POST', url: '/internal/register-roster', payload: roster, headers: identityHeaders })).statusCode).toBe(200);
       }
       expect(required((await ballotStore.query<{ count: number }>('SELECT count(*)::int AS count FROM checkpoints WHERE poll_id=$1', [setup.uuid])).rows[0]).count).toBe(1);
+      const PublicCredential = z.strictObject({ credential: z.string(), manifestHash: z.string(), recovery: z.literal('SameCredentialOnly'),
+        freshnessPolicy: z.literal('ValidUntilFixedClose; provider outage does not revoke an already issued credential') });
+      const committedSession = await login('TEST-PERSON-0001');
+      const committedFirst = await call('identity', `/v1/credentials/${setup.uuid}`, 'POST', {}, committedSession.token);
+      const committedSecond = await call('identity', `/v1/credentials/${setup.uuid}`, 'POST', {}, committedSession.token);
+      expect(committedFirst.status).toBe(200); expect(committedSecond.status).toBe(200);
+      const firstCredential = PublicCredential.parse(committedFirst.value), secondCredential = PublicCredential.parse(committedSecond.value);
+      expect(firstCredential.credential === secondCredential.credential).toBe(true);
+      expect(firstCredential.credential === required(setup.privateCredentials['TEST-PERSON-0001'])).toBe(true);
+      expect(firstCredential.manifestHash).toBe(sha(setup.electionRaw));
+      const postOpenSession = await login('TEST-PERSON-0006');
+      expect(await call('identity', `/v1/credentials/${setup.uuid}`, 'POST', {}, postOpenSession.token)).toEqual({ status: 403, value: { error: 'NO_ACTIVE_CREDENTIAL' } });
       const priorRoster = (await identityStore.query('SELECT * FROM credentials WHERE poll_id=$1 ORDER BY person', [setup.uuid])).rows;
       for (const payload of [
-        { ...roster, privateCredentials: { ...roster.privateCredentials, 'TEST-PERSON-0011': required(roster.privateCredentials['TEST-PERSON-0001']) } },
+        { ...roster, privateCredentials: { ...roster.privateCredentials, 'TEST-PERSON-0006': required(roster.privateCredentials['TEST-PERSON-0001']) } },
         { ...roster, privateCredentials: { ...roster.privateCredentials, 'TEST-PERSON-0001': required(roster.privateCredentials['TEST-PERSON-0003']) } },
         { ...roster, manifestHash: '0'.repeat(64) },
       ]) {
@@ -321,6 +333,7 @@ describe('real service boundaries', () => {
       const accepted = await box.inject({ method: 'POST', url: `/v1/elections/${setup.uuid}/ballots`, payload: { ballot } });
       expect(accepted.statusCode).toBe(200);
       expect((await box.inject({ method: 'POST', url: '/internal/register', payload: registration, headers: boxHeaders })).statusCode).toBe(200);
+      expect(required((await ballotStore.query<{ count: number }>('SELECT count(*)::int AS count FROM checkpoints WHERE poll_id=$1', [setup.uuid])).rows[0]).count).toBe(1);
       const saved = required((await ballotStore.query<{ archive: string }>('SELECT archive FROM elections WHERE id=$1', [setup.uuid])).rows[0]);
       expect(CoreReport.parse(await localCore({ action: 'verify', archive: saved.archive })).ballotCount).toBe(1);
       const other = CoreReport.parse(await localCore({ action: 'verify', archive: variants.otherPoll }));

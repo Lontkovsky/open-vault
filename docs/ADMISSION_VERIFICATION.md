@@ -21,6 +21,32 @@ The live-service test suite also exercises the actual identity and ballot applic
 
 The application-factory checks use the same handlers, migrations and native bridge as the running application. They are API evidence, not browser interaction. The existing live HTTP scenario separately verifies concurrent delivery, cross-provider recovery, fixed deadlines and a complete threshold tally.
 
+## Post-open admission baseline
+
+Before the V030 test extension, a local development reproduction created an open Belenios election with the committed synthetic roster `TEST-PERSON-0001`, `TEST-PERSON-0003` and `TEST-PERSON-0004`. `TEST-PERSON-0006` is an otherwise eligible adult Ukrainian synthetic participant but was intentionally absent from that roster. The reproduction used provider A and the actual identity application factory.
+
+- The committed participant authenticated and received HTTP 200 twice with the same credential and `SameCredentialOnly` recovery.
+- The outside eligible participant authenticated successfully but the public credential endpoint returned HTTP 403 `NO_ACTIVE_CREDENTIAL`.
+- An internal attempt to add that participant returned HTTP 409 `IMMUTABLE_ROSTER_MISMATCH`.
+- The three-row count and stored person/manifest/deadline metadata were unchanged after the rejected extension.
+
+The temporary roster rows, attempts and sessions were removed by the reproduction. This is observed unsupported behavior, not a dynamic-admission implementation or a production guarantee.
+
+## V030 verification checklist
+
+| Case | Prerequisite | Expected behavior | Current baseline |
+|---|---|---|---|
+| Committed participant | Open election and valid synthetic provider session | Return the same committed credential | HTTP 200 twice; identical credential |
+| New eligible participant | Successful provider authentication after the roster is committed | Refuse credential issuance because no committed credential exists | Automated HTTP 403 `NO_ACTIVE_CREDENTIAL` through the public identity flow |
+| Identity roster extension | Same poll ID with an additional eligible subject | Preserve the original lock and rows | HTTP 409 `IMMUTABLE_ROSTER_MISMATCH`; three rows unchanged |
+| Native archive replacement | Same registered election with an expanded public credential set | Preserve the registered archive | HTTP 409 `IMMUTABLE_ROSTER_MISMATCH` in the existing automated API regression |
+| Foreign ballot | Valid ballot from a credential outside the committed native registry | Refuse without changing the election | HTTP 422 `REFERENCE_REJECTED` in the existing automated API regression |
+| Existing accepted ballot | Original setup replayed after one accepted ballot | Preserve the accepted ballot and genesis state | Existing automated API regression passes |
+
+The selected integration cannot satisfy dynamic post-open admission. Completion evidence for #41 must retain the requirement as explicitly unfulfilled; it must not claim that these refusals implement support for adding a new participant.
+
+The focused V030 service regression passed in 31.61s. The aligned native suite passed all 27 checks in 57.123s, and the complete service/domain suite passed all 42 tests / seven files in 151.15s. No production source, schema, dependency or reference format changed. Because this is a test/evidence-only assessment with no changed web behavior, a new Browser E2E run is not part of this V030 verification.
+
 ## Trust-root limitation
 
 An additional native test deliberately supplies an expanded roster as the trusted input. The foreign credential then produces a valid accepted ballot. Its outcome is recorded as `KnownLimitation`, not `Rejected` or `Prevented`. An independently approved roster commitment and honest admission authority remain necessary; a tally cannot establish whether the issuer created a fictitious person. The native test does not demonstrate that ordinary API clients can replace an already registered roster.
