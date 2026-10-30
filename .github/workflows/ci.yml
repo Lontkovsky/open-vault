@@ -25,6 +25,8 @@ jobs:
         run: |
           docker build --platform linux/amd64 --target render-runtime -f infra/crypto.Dockerfile -t openvote-render:ci .
           docker run --rm --platform linux/amd64 --entrypoint node openvote-render:ci scripts/test-render-gateway.ts
+      - name: Build minimal demand launch image
+        run: docker build --platform linux/amd64 -f infra/demand.Dockerfile -t openvote-demand:ci .
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: 24.20.0
@@ -38,8 +40,8 @@ jobs:
           for port in 4301 4302 4303 4312 4313; do
             curl --fail --silent --retry 10 --retry-connrefused --retry-delay 1 "http://127.0.0.1:$port/health" > /dev/null
           done
-      - name: Types, build and real service contracts
-        run: pnpm types && pnpm build && pnpm smoke && pnpm test --reporter=default --reporter=json --outputFile=artifacts/services/tests.json
+      - name: Types, builds and real service contracts
+        run: pnpm types && pnpm build && pnpm build:demand && pnpm smoke && pnpm test --reporter=default --reporter=json --outputFile=artifacts/services/tests.json
       - name: Real encrypted voting and adversarial verification
         run: sh scripts/test-reference.sh
       - name: Verify public artifact without network or private storage

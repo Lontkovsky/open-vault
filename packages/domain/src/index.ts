@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const Environment = z.enum(['development', 'test', 'demo']);
 export const PollState = z.enum(['Draft', 'Review', 'Scheduled', 'Open', 'Closed', 'Tallying', 'Published', 'Rejected', 'Cancelled', 'Invalidated', 'ResultsSuppressed']);
-export const Answers = ['Підтримую', 'Не підтримую', 'Утримуюсь'];
+export const Answers = ['Підтримую', 'Не підтримую', 'Утримуюсь'] as const;
 export const representativenessWarning = 'Добровільна участь із самовідбором. Результат описує учасників цього голосування й не є автоматично репрезентативною думкою населення.';
 export const Question = z.string().min(12).max(240).regex(/^[\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]*$/u, 'Питання містить неприпустимий керівний символ');
 export const Categories = ['Громада', 'Освіта', 'Культура', 'Технології', 'Економіка', 'Довкілля', 'Соціальні питання'];

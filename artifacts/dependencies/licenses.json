@@ -1,6 +1,15 @@
 {
   "MIT": [
     {
+      "name": "@fastify/accept-negotiator",
+      "versions": [
+        "2.1.2"
+      ],
+      "license": "MIT",
+      "author": "Aras Abbasi",
+      "homepage": "https://github.com/fastify/accept-negotiator#readme"
+    },
+    {
       "name": "@fastify/ajv-compiler",
       "versions": [
         "4.0.6"
@@ -8,6 +17,15 @@
       "license": "MIT",
       "author": "Manuel Spigolon",
       "homepage": "https://github.com/fastify/ajv-compiler#readme"
+    },
+    {
+      "name": "@fastify/cookie",
+      "versions": [
+        "11.1.5"
+      ],
+      "license": "MIT",
+      "author": "James Sumners",
+      "homepage": "https://github.com/fastify/fastify-cookie#readme"
     },
     {
       "name": "@fastify/cors",
@@ -73,6 +91,24 @@
       "homepage": "https://github.com/fastify/proxy-addr#readme"
     },
     {
+      "name": "@fastify/send",
+      "versions": [
+        "4.2.0"
+      ],
+      "license": "MIT",
+      "author": "TJ Holowaychuk",
+      "homepage": "https://github.com/fastify/send#readme"
+    },
+    {
+      "name": "@fastify/static",
+      "versions": [
+        "10.1.8"
+      ],
+      "license": "MIT",
+      "author": "Tommaso Allevi - @allevo",
+      "homepage": "https://github.com/fastify/fastify-static"
+    },
+    {
       "name": "@jridgewell/resolve-uri",
       "versions": [
         "3.1.2"
@@ -98,6 +134,15 @@
       "license": "MIT",
       "author": "Justin Ridgewell",
       "homepage": "https://github.com/jridgewell/sourcemaps/tree/main/packages/trace-mapping"
+    },
+    {
+      "name": "@lukeed/ms",
+      "versions": [
+        "2.0.2"
+      ],
+      "license": "MIT",
+      "author": "Luke Edwards",
+      "homepage": "https://github.com/lukeed/ms#readme"
     },
     {
       "name": "@oxc-project/types",
@@ -269,6 +314,22 @@
       "homepage": "https://github.com/fastify/avvio#readme"
     },
     {
+      "name": "balanced-match",
+      "versions": [
+        "4.0.4"
+      ],
+      "license": "MIT",
+      "homepage": "https://github.com/juliangruber/balanced-match#readme"
+    },
+    {
+      "name": "brace-expansion",
+      "versions": [
+        "5.0.12"
+      ],
+      "license": "MIT",
+      "homepage": "https://github.com/juliangruber/brace-expansion#readme"
+    },
+    {
       "name": "chai",
       "versions": [
         "6.2.2"
@@ -278,9 +339,19 @@
       "homepage": "http://chaijs.com"
     },
     {
+      "name": "content-disposition",
+      "versions": [
+        "3.0.0"
+      ],
+      "license": "MIT",
+      "author": "Douglas Christopher Wilson",
+      "homepage": "https://github.com/jshttp/content-disposition#readme"
+    },
+    {
       "name": "cookie",
       "versions": [
-        "1.1.1"
+        "1.1.1",
+        "2.0.1"
       ],
       "license": "MIT",
       "author": "Roman Shtylman",
@@ -294,6 +365,15 @@
       "license": "MIT",
       "author": "Fredrik Nicol",
       "homepage": "https://github.com/frenic/csstype#readme"
+    },
+    {
+      "name": "depd",
+      "versions": [
+        "2.0.0"
+      ],
+      "license": "MIT",
+      "author": "Douglas Christopher Wilson",
+      "homepage": "https://github.com/dougwilson/nodejs-depd#readme"
     },
     {
       "name": "dequal",
@@ -312,6 +392,14 @@
       "license": "MIT",
       "author": "Guy Bedford",
       "homepage": "https://github.com/guybedford/es-module-lexer#readme"
+    },
+    {
+      "name": "escape-html",
+      "versions": [
+        "1.0.3"
+      ],
+      "license": "MIT",
+      "homepage": "https://github.com/component/escape-html#readme"
     },
     {
       "name": "estree-walker",
@@ -370,7 +458,7 @@
     {
       "name": "fastify",
       "versions": [
-        "5.12.3"
+        "5.12.7"
       ],
       "license": "MIT",
       "author": "Matteo Collina",
@@ -421,6 +509,15 @@
       "homepage": "https://helmet.js.org/"
     },
     {
+      "name": "http-errors",
+      "versions": [
+        "2.0.1"
+      ],
+      "license": "MIT",
+      "author": "Jonathan Ong",
+      "homepage": "https://github.com/jshttp/http-errors#readme"
+    },
+    {
       "name": "ipaddr.js",
       "versions": [
         "2.5.0"
@@ -455,6 +552,15 @@
       "license": "MIT",
       "author": "Rich Harris",
       "homepage": "https://github.com/Rich-Harris/magic-string#readme"
+    },
+    {
+      "name": "mime",
+      "versions": [
+        "3.0.0"
+      ],
+      "license": "MIT",
+      "author": "Robert Kieffer",
+      "homepage": "https://github.com/broofa/mime#readme"
     },
     {
       "name": "nanoid",
@@ -777,6 +883,14 @@
       "homepage": "https://github.com/shtylman/node-stackback#readme"
     },
     {
+      "name": "statuses",
+      "versions": [
+        "2.0.2"
+      ],
+      "license": "MIT",
+      "homepage": "https://github.com/jshttp/statuses#readme"
+    },
+    {
       "name": "std-env",
       "versions": [
         "4.2.0"
@@ -829,6 +943,15 @@
       "homepage": "https://github.com/kibertoad/toad-cache"
     },
     {
+      "name": "toidentifier",
+      "versions": [
+        "1.0.1"
+      ],
+      "license": "MIT",
+      "author": "Douglas Christopher Wilson",
+      "homepage": "https://github.com/component/toidentifier#readme"
+    },
+    {
       "name": "undici-types",
       "versions": [
         "7.16.0"
@@ -875,7 +998,7 @@
     {
       "name": "zod",
       "versions": [
-        "4.5.4"
+        "4.6.7"
       ],
       "license": "MIT",
       "author": "Colin McDonnell",
@@ -923,8 +1046,8 @@
     {
       "name": "fast-uri",
       "versions": [
-        "3.1.7",
-        "4.1.4"
+        "3.1.9",
+        "4.2.3"
       ],
       "license": "BSD-3-Clause",
       "author": "Vincent Le Goff",
@@ -969,6 +1092,14 @@
       "homepage": "https://github.com/mcollina/fastq#readme"
     },
     {
+      "name": "inherits",
+      "versions": [
+        "2.0.4"
+      ],
+      "license": "ISC",
+      "homepage": "https://github.com/isaacs/inherits#readme"
+    },
+    {
       "name": "pg-int8",
       "versions": [
         "1.0.1"
@@ -995,6 +1126,15 @@
       "homepage": "https://github.com/npm/node-semver#readme"
     },
     {
+      "name": "setprototypeof",
+      "versions": [
+        "1.2.0"
+      ],
+      "license": "ISC",
+      "author": "Wes Todd",
+      "homepage": "https://github.com/wesleytodd/setprototypeof"
+    },
+    {
       "name": "siginfo",
       "versions": [
         "2.0.0"
@@ -1011,6 +1151,53 @@
       "license": "ISC",
       "author": "Matteo Collina",
       "homepage": "https://github.com/mcollina/split2#readme"
+    }
+  ],
+  "BlueOak-1.0.0": [
+    {
+      "name": "glob",
+      "versions": [
+        "13.0.6"
+      ],
+      "license": "BlueOak-1.0.0",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/node-glob#readme"
+    },
+    {
+      "name": "lru-cache",
+      "versions": [
+        "11.5.3"
+      ],
+      "license": "BlueOak-1.0.0",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/node-lru-cache#readme"
+    },
+    {
+      "name": "minimatch",
+      "versions": [
+        "10.2.6"
+      ],
+      "license": "BlueOak-1.0.0",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/minimatch#readme"
+    },
+    {
+      "name": "minipass",
+      "versions": [
+        "7.1.3"
+      ],
+      "license": "BlueOak-1.0.0",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/minipass#readme"
+    },
+    {
+      "name": "path-scurry",
+      "versions": [
+        "2.0.2"
+      ],
+      "license": "BlueOak-1.0.0",
+      "author": "Isaac Z. Schlueter",
+      "homepage": "https://github.com/isaacs/path-scurry#readme"
     }
   ],
   "MPL-2.0": [

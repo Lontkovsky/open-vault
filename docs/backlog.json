@@ -1170,6 +1170,37 @@
       "risk": "High",
       "issue": "https://github.com/Lontkovsky/openvote/issues/51",
       "number": 51
+    },
+    {
+      "id": "V032",
+      "epic": "E10",
+      "title": "Publish minimal demand-validation landing and anonymous poll at openvote.com.ua",
+      "goal": "Validate demand for the planned platform before deploying the full synthetic-demo infrastructure.",
+      "scope": "One Ukrainian landing page, one immutable demand poll, one web service, one PostgreSQL database, custom apex domain and honest methodology disclosures",
+      "outOfScope": "Full platform, identity providers, Belenios, user-created polls, representative or one-person-one-vote claims, paid deployment before approval.",
+      "dependencies": [
+        "E10"
+      ],
+      "acceptance": [
+        "Minimal Blueprint and local vertical merge after focused tests, retained in-app Browser verification and exact-head CI",
+        "Each response row contains only poll ID/version, browser-credential hash and final answer; no live counts are public during collection",
+        "Owner confirms the exact Dashboard charge before paid resources are created",
+        "Apex HTTPS and recorded state survive an actual Render restart after deployment"
+      ],
+      "verification": "Run the demand contract, concurrency, origin, privacy, migration, build, image and retained in-app Browser checks; keep hosted evidence separate.",
+      "privacy": "No identity/contact fields, IP or User-Agent storage. Browser credentials limit accidental repeats only and cannot prove a unique person or citizenship.",
+      "fixtures": "Random synthetic browser credentials and isolated demand-response rows only.",
+      "howToVerify": "Follow docs/DEMAND_DEPLOYMENT.md and issue #53; do not create Render resources or replace DNS before action-time approval.",
+      "requirements": [
+        "1",
+        "2",
+        "15.5"
+      ],
+      "priority": "P0",
+      "phase": "Production Readiness",
+      "risk": "High",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/53",
+      "number": 53
     }
   ]
 }
