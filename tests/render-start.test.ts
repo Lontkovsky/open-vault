@@ -138,6 +138,18 @@ describe('Render environment contract', () => {
     expect(configuration.databases.identity.database).toBe('openvote_identity');
   });
 
+  it('accepts Render internal database URLs with the default PostgreSQL port', () => {
+    const configuration = parseRenderConfiguration({
+      ...valid,
+      IDENTITY_DATABASE_URL: 'postgresql://openvote_identity:identity-password@identity.internal/openvote_identity',
+      BALLOT_DATABASE_URL: 'postgresql://openvote_ballot:ballot-password@ballot.internal/openvote_ballot',
+      MANAGEMENT_DATABASE_URL: 'postgresql://openvote_management:management-password@management.internal/openvote_management',
+    });
+    expect(configuration.databases.identity.port).toBe(5432);
+    expect(configuration.databases.ballot.port).toBe(5432);
+    expect(configuration.databases.management.port).toBe(5432);
+  });
+
   it.each([
     { ...valid, OPENVOTE_ENVIRONMENT: 'production' },
     { ...valid, OPENVOTE_PUBLIC_ORIGIN: 'http://openvote.com.ua' },

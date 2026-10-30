@@ -2,12 +2,12 @@ previews:
   generation: off
 
 projects:
-  - name: Open Vote Launch
+  - name: Open Vote
     environments:
       - name: production
         services:
           - type: web
-            name: openvote-launch
+            name: openvote
             runtime: docker
             plan: 0.5c-512mb
             region: frankfurt
@@ -15,6 +15,10 @@ projects:
             dockerfilePath: ./infra/demand.Dockerfile
             dockerContext: .
             healthCheckPath: /health
+            disk:
+              name: openvote-runtime
+              mountPath: /app/.runtime-disk
+              sizeGB: 1
             domains:
               - openvote.com.ua
             envVars:
@@ -30,6 +34,30 @@ projects:
           - name: openvote-demand
             databaseName: openvote_demand
             user: openvote_demand
+            plan: 0.1c-256mb
+            diskSizeGB: 1
+            postgresMajorVersion: "18"
+            region: frankfurt
+            ipAllowList: []
+          - name: openvote-identity
+            databaseName: openvote_identity
+            user: openvote_identity
+            plan: 0.1c-256mb
+            diskSizeGB: 1
+            postgresMajorVersion: "18"
+            region: frankfurt
+            ipAllowList: []
+          - name: openvote-ballot
+            databaseName: openvote_ballot
+            user: openvote_ballot
+            plan: 0.1c-256mb
+            diskSizeGB: 1
+            postgresMajorVersion: "18"
+            region: frankfurt
+            ipAllowList: []
+          - name: openvote-management
+            databaseName: openvote_management
+            user: openvote_management
             plan: 0.1c-256mb
             diskSizeGB: 1
             postgresMajorVersion: "18"

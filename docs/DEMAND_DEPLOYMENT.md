@@ -1,19 +1,19 @@
 # Minimal demand-validation deployment
 
-Issue [#53](https://github.com/Lontkovsky/openvote/issues/53) owns the initial public launch. The default [`render.yaml`](../render.yaml) declares only the demand-validation landing and its database. It does not deploy the full Open Vote platform.
+Issue [#53](https://github.com/Lontkovsky/openvote/issues/53) owns the initial public launch. The single [`render.yaml`](../render.yaml) declares one `openvote` web service, four databases and one 1 GB persistent disk in one `production` environment. The service currently runs only the demand application; the disk is reserved for the future full runtime.
 
 ## Declared resources and cost boundary
 
-The minimal Blueprint declares one Frankfurt environment with:
+The active demand configuration contains:
 
-- one Docker web service, `openvote-launch`, on plan `0.5c-512mb`;
+- one Docker web service, `openvote`, on plan `0.5c-512mb`;
 - one PostgreSQL 18 database, `openvote-demand`, on plan `0.1c-256mb` with 1 GB storage;
 - the apex custom domain `openvote.com.ua`;
-- no persistent service disk, wildcard domain, API subdomains, identity service, ballot service, management service or cryptographic runtime.
+- no demand data on the attached disk, wildcard domain, API subdomains, identity service, ballot service, management service or cryptographic runtime in the running container.
 
-The expected Dashboard base is USD 13.30 per month: USD 7 for the web service and the currently displayed USD 6.30 for the database. This is not a billing cap. Bandwidth, build-minute, tax or other usage-based charges can be additional. The Render review screen is authoritative immediately before deployment.
+The expected steady base is approximately USD 14.45 per month: USD 13.30 for the active web service and demand database, USD 0.25 for the persistent disk, and USD 0.90 for 1 GB storage on each of the three suspended role databases. This is not a billing cap. Bandwidth, build-minute, tax or other usage-based charges can be additional. The Render review screen is authoritative immediately before deployment.
 
-No paid resource may be created until the owner confirms the exact Dashboard total. This repository change prepares and validates configuration only.
+The owner approved creating the unified resources. Render suspension is an operational action rather than a Blueprint field: after creation, suspend the identity, ballot and management databases and leave only `openvote` plus `openvote-demand` active. Suspended database storage remains billable.
 
 ## Product and data boundary
 
@@ -40,15 +40,15 @@ docker build --platform linux/amd64 -f infra/demand.Dockerfile -t openvote-deman
 
 In the retained in-app Browser session, open the local demand page and verify the three answers, explicit final confirmation, successful receipt, reload persistence, absence of editable controls after submission, absence of public counts, and a 390×844 layout without horizontal overflow. Keep this local evidence separate from the hosted checks below.
 
-## Preserved future configuration
+## Unified full-stack environment
 
-The complete synthetic-demo Blueprint from issue [#51](https://github.com/Lontkovsky/openvote/issues/51) remains unchanged at [`infra/render.full.yaml`](../infra/render.full.yaml). It still describes the three databases, persistent runtime disk, cryptographic runtime and separate API hosts. It is a future configuration and must not be selected for the initial launch.
+The same environment also declares the three role databases from issue [#51](https://github.com/Lontkovsky/openvote/issues/51). During demand collection they remain suspended. The full Docker runtime is not active and the attached disk remains uninitialized in this phase.
 
-If that future deployment is approved, create a separate Render Blueprint and set its Blueprint Path explicitly to `infra/render.full.yaml`. The repository default remains the minimal launch to prevent accidental provisioning of the full stack.
+The future full-platform cutover reuses the same `openvote` service and disk: switch the Dockerfile/environment variables and compute plan, resume the three role databases, add the wildcard domain, and suspend `openvote-demand`. Do not start the full runtime without the attached persistent key state.
 
-## Deferred paid deployment and DNS
+## Paid deployment and DNS
 
-After local checks, retained in-app Browser verification, pull-request CI and merge, the next action is to open the minimal Blueprint review in the existing Render session. Stop at the final cost screen and obtain explicit owner confirmation before selecting Deploy Blueprint.
+After local checks, retained in-app Browser verification, pull-request CI and merge, sync the single Blueprint in the existing Render project, verify the demand service and all four databases, and suspend the three unused role databases.
 
 DNS remains unchanged until Render creates the approved service and displays its actual custom-domain target. At that point:
 

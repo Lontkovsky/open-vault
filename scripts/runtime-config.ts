@@ -57,11 +57,11 @@ export function parseDatabaseUrl(value: string, role: DatabaseRole): DatabaseSet
   let url: URL;
   try { url = new URL(value); } catch { return fail('DATABASE_URL_INVALID'); }
   const database = decodeURIComponent(url.pathname.slice(1));
-  if (url.protocol !== 'postgresql:' || url.hostname === '' || url.port === '' || url.username === '' || url.password === '' ||
+  if (url.protocol !== 'postgresql:' || url.hostname === '' || url.username === '' || url.password === '' ||
       url.pathname.split('/').length !== 2 || database !== `openvote_${role}` || url.search !== '' || url.hash !== '') {
     return fail('DATABASE_URL_INVALID');
   }
-  const port = Number(url.port);
+  const port = url.port === '' ? 5432 : Number(url.port);
   if (!Number.isInteger(port) || port < 1 || port > 65535) return fail('DATABASE_URL_INVALID');
   return DatabaseSettings.parse({
     host: url.hostname,
