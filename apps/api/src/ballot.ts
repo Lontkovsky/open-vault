@@ -14,8 +14,8 @@ const CoreAccepted = z.strictObject({ archive: z.string(), tracker: z.string(), 
 const CoreClosed = z.strictObject({ archive: z.string(), ballotCount: z.number().int().nonnegative() });
 const CoreResult = z.strictObject({ archive: z.string(), result: z.strictObject({ result: z.tuple([z.tuple([z.number().int().nonnegative(), z.number().int().nonnegative(), z.number().int().nonnegative()])]) }) });
 
-export async function ballotApp(config: ConfigType) {
-  const app = await application(config), pool = database(config);
+export async function ballotApp(config: ConfigType, publicOrigin: string) {
+  const app = await application(config, publicOrigin), pool = database(config);
   app.addHook('onClose', () => pool.end());
   async function checkpoint(client: pg.PoolClient, election: ElectionRow) {
     const previous = await client.query<{ envelope: unknown; sequence: number }>('SELECT envelope,sequence FROM checkpoints WHERE poll_id=$1 ORDER BY sequence DESC LIMIT 1', [election.id]);

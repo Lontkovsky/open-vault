@@ -64,7 +64,7 @@ export function Identity({ onSignedIn }: { onSignedIn: (auth: Auth) => void }) {
     <p className="muted">Зміна провайдера — явна дія. Вже видане право чинне до зафіксованого закриття за політикою цього голосування; збій провайдера сам по собі не відкликає його. Перезавантаження сторінки вимагає нової ідентифікації й не змінює право голосу.</p>
     {catalogue !== null && <section className="provider-contracts"><h2>Можливості та межі інтеграцій</h2><p>Непідключений провайдер не є каналом відновлення. Два банки BankID залежать від спільного центрального вузла; КЕП і Дія.Підпис можуть мати спільні залежності довіри. Незалежність перевіряється за конкретними контрактами.</p>
       {[...catalogue.providers, ...catalogue.production].map(p => <details key={p.provider}><summary>{p.name} — {p.state === 'SyntheticImplemented' ? 'тестова інтеграція' : 'Очікує контракту інтеграції (AwaitingProviderContract)'}</summary><dl>{Object.entries(capabilityLabels).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{Reflect.get(p.capabilities, key)}</dd></div>)}</dl></details>)}
-      <p><a href="https://github.com/Lontkovsky/vidkrytyi-holos/blob/main/docs/IDENTITY_PROVIDERS.md" target="_blank" rel="noreferrer">Матриця й офіційні джерела ↗</a></p>
+      <p><a href="https://github.com/Lontkovsky/openvote/blob/main/docs/IDENTITY_PROVIDERS.md" target="_blank" rel="noreferrer">Матриця й офіційні джерела ↗</a></p>
     </section>}
   </section>;
 }

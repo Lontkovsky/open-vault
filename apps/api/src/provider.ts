@@ -4,9 +4,9 @@ import { Attestation } from '../../../packages/domain/src/index.ts';
 import { application, authorize, envelope, Failure, required } from './common.ts';
 import type { ConfigType } from './common.ts';
 
-export async function providerApp(config: ConfigType) {
+export async function providerApp(config: ConfigType, publicOrigin: string) {
   const provider = z.enum(['A', 'B']).parse(config.role.slice(-1));
-  const app = await application(config);
+  const app = await application(config, publicOrigin);
   const State = z.strictObject({ available: z.boolean(), delayMs: z.number().int().min(0).max(3000), conflictingAttributes: z.boolean() });
   let state = State.parse({ available: true, delayMs: 0, conflictingAttributes: false });
   let pending = 0;

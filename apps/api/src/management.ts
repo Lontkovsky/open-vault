@@ -19,8 +19,8 @@ function cryptoId(poll: PollType): string {
   if (poll.cryptoId === null) throw new Failure('POLL_NOT_PROVISIONED', 409);
   return poll.cryptoId;
 }
-export async function managementApp(config: ConfigType) {
-  const app = await application(config), pool = database(config), quotas = required(config.quotas);
+export async function managementApp(config: ConfigType, publicOrigin: string) {
+  const app = await application(config, publicOrigin), pool = database(config), quotas = required(config.quotas);
   app.addHook('onClose', () => pool.end());
   async function identity(header: string | undefined) {
     if (header === undefined || !header.startsWith('Bearer ')) throw new Failure('AUTHENTICATION_REQUIRED', 401);

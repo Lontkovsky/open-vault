@@ -44,6 +44,8 @@ Execute each stage with `await suite.step(name)` in this order:
 | Provider switch | A unavailable and B explicitly selected | The same person receives no second right | Not run after export failure | Passed |
 | Both unavailable | A and B controlled unavailable | Participation remains unavailable and both statuses recover after reset | Not run after export failure | Passed |
 
+Deployment-source run `6f9cb9f991` completed the same 14 stages and 38 assertions in the retained in-app Browser session. Its initial and final source digests both equal `fd7cf14702dde22addaafd900229219984a685b6c4863a292ed487a41fa98671`; the downloaded archive separately passed the native Belenios 3.3.0 verifier with three ballots and exact `[[1,1,1]]`.
+
 Asynchronous review/tally start and completion are separate stages. Wait for real completion; do not change the fixed deadline or insert fabricated outcomes. Every browser action uses the supplied tab.playwright API. Public UI state is inspected after actions; no browser secrets or hidden application state are read. The native cryptographic tract is exercised, not mocked.
 
 The four provider stages additionally use the private local coordinator to set A/B mock availability and count active attempts for the one fixed synthetic fixture. They do not authenticate through that control channel: login, error, retry, switching, capability disclosure and result navigation all execute through the UI. The attempt-count check returns only a count and proves that repeated failed deliveries did not create new attempts. Both mock processes are reset at setup and completion/interruption. Run live service tests before this suite, not concurrently, because they deliberately control the same synthetic providers.

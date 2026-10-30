@@ -7,7 +7,9 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from reference import process
 
 allowed = set(os.environ['CORE_ACTIONS'].split(','))
-secret = open('/run/secrets/core-token').read().strip()
+host = os.environ['CORE_HOST']
+port = int(os.environ['CORE_PORT'])
+secret = open(os.environ['CORE_TOKEN_PATH']).read().strip()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -52,6 +54,6 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-server = HTTPServer(('0.0.0.0', 4310), Handler)
+server = HTTPServer((host, port), Handler)
 server.timeout = 100
 server.serve_forever()

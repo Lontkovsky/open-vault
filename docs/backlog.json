@@ -1,5 +1,5 @@
 {
-  "repository": "Lontkovsky/vidkrytyi-holos",
+  "repository": "Lontkovsky/openvote",
   "owner": "Lontkovsky",
   "projectNumber": 5,
   "projectId": "PVT_kwHOAWUZ0c4BioUK",
@@ -28,7 +28,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/1",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/1",
       "number": 1
     },
     {
@@ -53,7 +53,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/2",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/2",
       "number": 2
     },
     {
@@ -78,7 +78,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/3",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/3",
       "number": 3
     },
     {
@@ -103,7 +103,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/4",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/4",
       "number": 4
     },
     {
@@ -128,7 +128,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/5",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/5",
       "number": 5
     },
     {
@@ -153,7 +153,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/6",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/6",
       "number": 6
     },
     {
@@ -178,7 +178,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/7",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/7",
       "number": 7
     },
     {
@@ -203,7 +203,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/8",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/8",
       "number": 8
     },
     {
@@ -228,7 +228,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/9",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/9",
       "number": 9
     },
     {
@@ -253,7 +253,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/10",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/10",
       "number": 10
     },
     {
@@ -278,7 +278,7 @@
       "priority": "P1",
       "phase": "Production Readiness",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/11",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/11",
       "number": 11
     },
     {
@@ -307,7 +307,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/12",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/12",
       "number": 12
     },
     {
@@ -335,7 +335,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/13",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/13",
       "number": 13
     },
     {
@@ -364,7 +364,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/14",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/14",
       "number": 14
     },
     {
@@ -394,7 +394,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/15",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/15",
       "number": 15
     },
     {
@@ -425,7 +425,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/16",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/16",
       "number": 16
     },
     {
@@ -453,7 +453,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/17",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/17",
       "number": 17
     },
     {
@@ -481,7 +481,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/18",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/18",
       "number": 18
     },
     {
@@ -510,7 +510,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/19",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/19",
       "number": 19
     },
     {
@@ -539,7 +539,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/20",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/20",
       "number": 20
     },
     {
@@ -568,7 +568,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/21",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/21",
       "number": 21
     },
     {
@@ -597,7 +597,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/22",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/22",
       "number": 22
     },
     {
@@ -625,7 +625,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/23",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/23",
       "number": 23
     },
     {
@@ -655,7 +655,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/24",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/24",
       "number": 24
     },
     {
@@ -684,7 +684,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/25",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/25",
       "number": 25
     },
     {
@@ -712,7 +712,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/26",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/26",
       "number": 26
     },
     {
@@ -741,7 +741,7 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/27",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/27",
       "number": 27
     },
     {
@@ -771,7 +771,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/28",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/28",
       "number": 28
     },
     {
@@ -797,7 +797,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/29",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/29",
       "number": 29
     },
     {
@@ -826,7 +826,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/30",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/30",
       "number": 30
     },
     {
@@ -855,7 +855,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/31",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/31",
       "number": 31
     },
     {
@@ -883,7 +883,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/32",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/32",
       "number": 32
     },
     {
@@ -911,7 +911,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/33",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/33",
       "number": 33
     },
     {
@@ -939,7 +939,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/34",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/34",
       "number": 34
     },
     {
@@ -967,7 +967,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/35",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/35",
       "number": 35
     },
     {
@@ -1000,7 +1000,7 @@
       "priority": "P1",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/36",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/36",
       "number": 36
     },
     {
@@ -1028,7 +1028,7 @@
       "priority": "P1",
       "phase": "Production Readiness",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/37",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/37",
       "number": 37
     },
     {
@@ -1054,7 +1054,7 @@
       "priority": "P1",
       "phase": "Production Readiness",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/38",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/38",
       "number": 38
     },
     {
@@ -1082,7 +1082,7 @@
       "priority": "P1",
       "phase": "Production Readiness",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/39",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/39",
       "number": 39
     },
     {
@@ -1110,7 +1110,7 @@
       "priority": "P1",
       "phase": "Production Readiness",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/40",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/40",
       "number": 40
     },
     {
@@ -1137,8 +1137,39 @@
       "priority": "P0",
       "phase": "Development release",
       "risk": "High",
-      "issue": "https://github.com/Lontkovsky/vidkrytyi-holos/issues/41",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/41",
       "number": 41
+    },
+    {
+      "id": "V031",
+      "epic": "E10",
+      "title": "Deploy public synthetic Render demo at openvote.com.ua",
+      "goal": "Publish the existing platform as a clearly labeled synthetic demo from a repository-owned Blueprint.",
+      "scope": "Render Blueprint, isolated role databases, persistent runtime state, separate browser origins, custom domain and hosted verification",
+      "outOfScope": "Real identity providers, production certification, independent operators, legal readiness or external audit.",
+      "dependencies": [
+        "E10"
+      ],
+      "acceptance": [
+        "Blueprint and deployment integration merge after exact-head CI",
+        "Owner confirms the Dashboard charge before paid resources are created",
+        "Synthetic Browser flow and persistent state survive an actual Render restart",
+        "Apex, API subdomains, redirects and TLS are verified after exact DNS changes"
+      ],
+      "verification": "Run focused origin/runtime tests, final-image host routing, affected service/native tests, the retained in-app Browser flow and post-deploy restart verification.",
+      "privacy": "Synthetic TEST-PERSON identities only; preserve role stores, origins, credentials and fail-closed runtime state.",
+      "fixtures": "TEST-PERSON identities, test-only keys and isolated disposable PostgreSQL databases.",
+      "howToVerify": "Follow docs/DEPLOYMENT.md and the issue checklist; keep hosted demo evidence separate from production readiness.",
+      "requirements": [
+        "8",
+        "13",
+        "15.8"
+      ],
+      "priority": "P0",
+      "phase": "Production Readiness",
+      "risk": "High",
+      "issue": "https://github.com/Lontkovsky/openvote/issues/51",
+      "number": 51
     }
   ]
 }

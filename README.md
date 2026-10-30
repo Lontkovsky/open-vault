@@ -12,6 +12,19 @@ The first implemented slice runs **unmodified Belenios 3.3.0 cryptography** with
 
 The application slice now includes synthetic identity providers A/B, separate PostgreSQL stores, client encryption, final ballot acceptance, trustee finality checks, public results and a Ukrainian React interface. It is still **incomplete development work**, with remaining acceptance criteria recorded in [progress](docs/PROGRESS.md).
 
+## Public synthetic demo deployment
+
+The repository-owned [Render Blueprint](render.yaml) declares one paid Docker web service, three separate paid PostgreSQL databases and a persistent runtime disk in a `demo` environment. The web service preserves browser trust boundaries with distinct hosts:
+
+- `openvote.com.ua` — the Ukrainian SPA;
+- `identity.openvote.com.ua` — identity and eligibility;
+- `ballot.openvote.com.ua` — ballot box and public audit data;
+- `management.openvote.com.ua` — poll lifecycle and moderation.
+
+Only Nginx listens on Render's public `$PORT`. The five application roles and two unchanged Belenios bridges listen on container loopback. First startup is allowed only when the persistent disk and all three databases are empty. Runtime keys and role configuration are generated once, migrations complete before health becomes available, and later starts require the exact same disk/database/origin bindings. Missing or partial state fails startup instead of generating replacement keys.
+
+This is a **public synthetic demo**, not a production launch: only predefined `TEST-PERSON` identities are accepted, mock providers remain visibly labeled, one operator controls the service and disk, and backup/restore, independent trustees, real identity providers, legal readiness and external audit remain open. Exact deployment, DNS, restart and rollback boundaries are documented in [deployment operations](docs/DEPLOYMENT.md).
+
 For the local application, install Node **24.20.0**, pnpm **10.33.0**, Docker Compose and Python 3, then run from the cloned repository:
 
 ```sh
@@ -51,9 +64,9 @@ The separate [public observer](docs/OBSERVER.md) persists signed history, checks
 To reproduce the current slice with Git, Docker and Python 3:
 
 ```sh
-git clone --recurse-submodules https://github.com/Lontkovsky/vidkrytyi-holos.git
-cd vidkrytyi-holos
-docker build --platform linux/amd64 -f infra/crypto.Dockerfile -t openvote-crypto:3.3.0 .
+git clone --recurse-submodules https://github.com/Lontkovsky/openvote.git
+cd openvote
+docker build --platform linux/amd64 --target crypto-runtime -f infra/crypto.Dockerfile -t openvote-crypto:3.3.0 .
 sh scripts/test-reference.sh
 sh scripts/verify.sh artifacts/reference/election.bel
 python3 scripts/scan-public.py
@@ -61,6 +74,6 @@ python3 scripts/scan-public.py
 
 Verification runs with Docker networking disabled and only the public archive mounted. Generated private material stays inside temporary container directories and is removed with the container. The exported `.bel` file contains ciphertexts and reference proofs, not named choices. `artifacts/reference/reference-report.json` records exactly which checks ran; this command does not test browser encryption or prove production security.
 
-Public planning: [issues](https://github.com/Lontkovsky/vidkrytyi-holos/issues), [board](https://github.com/users/Lontkovsky/projects/5). `python3 scripts/sync-backlog.py` and `python3 scripts/sync-board.py` reconcile the declared backlog through an already authenticated `gh` CLI without printing tokens. Execution status remains on GitHub.
+Public planning: [issues](https://github.com/Lontkovsky/openvote/issues), [board](https://github.com/users/Lontkovsky/projects/5). `python3 scripts/sync-backlog.py` and `python3 scripts/sync-board.py` reconcile the declared backlog through an already authenticated `gh` CLI without printing tokens. Execution status remains on GitHub.
 
 Own code is licensed **AGPL-3.0-only**. Third-party components retain their own licenses.

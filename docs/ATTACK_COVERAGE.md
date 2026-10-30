@@ -7,7 +7,7 @@ Machine-readable source: [attack-coverage.json](attack-coverage.json). Defense o
 | A01 | Повторні голоси однієї людини | PartiallyMitigated | AutomatedTested | Stale writable backup guard not yet implemented |
 | A02 | Фіктивні голоси від власника або issuer | PartiallyMitigated | AutomatedTested | Genuine foreign credentials, an eligible post-open nonmember and frozen API roster/key changes are rejected; replacing the trusted roster admits an issuer-created credential. Independent roster provenance and complete role/collusion evidence remain open |
 | A03 | Встановлення вибору конкретної людини | PartiallyMitigated | AutomatedTested | Native subset/individual/early/small-group guards tested; first signed fork needs external acknowledgement evidence; issuer linkage, sufficient key collusion and unanimity remain limitations |
-| A04 | Компрометація БД, логів і backups | PartiallyMitigated | NotTested | Full synthetic leak/reconstruction experiment and backup controls pending |
+| A04 | Компрометація БД, логів і backups | PartiallyMitigated | AutomatedTested | Runtime disk/DB mismatch and byte-identical restart are tested; full leak/reconstruction and verified backup/restore remain pending |
 | A05 | Добровільне голосування видається за думку населення | PartiallyMitigated | AutomatedTested | UI/API/JSON/CSV/SVG consistency tested; external copies, screenshots and spreadsheet reinterpretation cannot be controlled |
 | A06 | Маніпуляція формулюванням і контекстом | PartiallyMitigated | AutomatedTested | Malicious language suite and source/content removal policy tests pending |
 | A07 | Дублікати та захоплення каталогу | PartiallyMitigated | NotTested | Mass publishing and quota bypass tests pending |

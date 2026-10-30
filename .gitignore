@@ -3,6 +3,8 @@ dist/
 .env
 .env.*
 !.env.example
+!apps/web/.env.development
+!apps/web/.env.production
 .runtime/
 .cache/
 coverage/

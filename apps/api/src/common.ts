@@ -18,6 +18,13 @@ export const Config = z.strictObject({
   quotas: z.strictObject({ daily: z.number().int().positive(), cooldownSeconds: z.number().int().nonnegative(), simultaneousOpen: z.number().int().positive() }).optional(),
 });
 export type ConfigType = z.infer<typeof Config>;
+export function parsePublicOrigin(value: unknown, environment: ConfigType['environment']): string {
+  const origin = z.string().url().parse(value);
+  const parsed = new URL(origin);
+  if (parsed.origin !== origin || !['http:', 'https:'].includes(parsed.protocol)) throw new Failure('INVALID_PUBLIC_ORIGIN', 503);
+  if (environment === 'demo' && parsed.protocol !== 'https:') throw new Failure('INVALID_PUBLIC_ORIGIN', 503);
+  return origin;
+}
 export class Failure extends Error {
   statusCode: number;
   constructor(code: string, statusCode: number) { super(code); this.statusCode = statusCode; }
@@ -26,9 +33,9 @@ export function required<T>(value: T | undefined): T {
   if (value === undefined) throw new Failure('CONFIGURATION_INCOMPLETE', 503);
   return value;
 }
-export async function readConfig(role: string): Promise<ConfigType> {
+export async function readConfig(role: string, runtimeRoot = '.runtime'): Promise<ConfigType> {
   Role.parse(role);
-  const config = Config.parse(JSON.parse(await readFile(`.runtime/${role}/config.json`, 'utf8')));
+  const config = Config.parse(JSON.parse(await readFile(`${runtimeRoot}/${role}/config.json`, 'utf8')));
   if (config.role !== role) throw new Failure('ROLE_MISMATCH', 503);
   return config;
 }
@@ -83,14 +90,15 @@ export async function jsonRequest(url: string, body: unknown, authorization: str
 export async function core(config: ConfigType, request: unknown, ceremony = false): Promise<unknown> {
   return jsonRequest(`http://127.0.0.1:${ceremony ? 4311 : 4310}/run`, request, required(config.coreToken));
 }
-export async function application(config: ConfigType) {
+export async function application(config: ConfigType, publicOrigin: string) {
+  const origin = parsePublicOrigin(publicOrigin, config.environment);
   const app = Fastify({ logger: false, bodyLimit: 1024 * 1024, requestTimeout: 100000,
     connectionTimeout: 100000, routerOptions: { maxParamLength: 100 }, logController: new LogController({ disableRequestLogging: true }) });
-  await app.register(cors, { origin: 'http://localhost:5173', credentials: false, methods: ['GET', 'POST', 'PATCH', 'DELETE'] });
+  await app.register(cors, { origin, credentials: false, methods: ['GET', 'POST', 'PATCH', 'DELETE'] });
   await app.register(helmet, { referrerPolicy: { policy: 'no-referrer' } });
   app.addHook('onRequest', async (request, reply) => {
     reply.header('cache-control', 'no-store');
-    if (request.headers.origin !== undefined && request.headers.origin !== 'http://localhost:5173') throw new Failure('ORIGIN_REJECTED', 403);
+    if (request.headers.origin !== undefined && request.headers.origin !== origin) throw new Failure('ORIGIN_REJECTED', 403);
   });
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof Failure) return reply.code(error.statusCode).send({ error: error.message });

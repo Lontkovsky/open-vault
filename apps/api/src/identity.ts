@@ -6,8 +6,8 @@ import { application, authorize, database, Failure, pseudonym, required, sealed,
 import type { ConfigType } from './common.ts';
 import { MockIdentityProvider, AwaitingProviderContract } from './identity-provider.ts';
 
-export async function identityApp(config: ConfigType) {
-  const app = await application(config), pool = database(config);
+export async function identityApp(config: ConfigType, publicOrigin: string) {
+  const app = await application(config, publicOrigin), pool = database(config);
   app.addHook('onClose', () => pool.end());
   const Subject = SyntheticSubject;
   const providerTokens = required(config.providerTokens), providerKeys = required(config.providerKeys);

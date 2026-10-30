@@ -1,4 +1,8 @@
-export const endpoints = { identity: 'http://127.0.0.1:4301', ballot: 'http://127.0.0.1:4302', management: 'http://127.0.0.1:4303' };
+export const endpoints = {
+  identity: import.meta.env.VITE_IDENTITY_ORIGIN,
+  ballot: import.meta.env.VITE_BALLOT_ORIGIN,
+  management: import.meta.env.VITE_MANAGEMENT_ORIGIN,
+};
 export class ApiFailure extends Error {
   status: number;
   constructor(code: string, status: number) { super(code); this.status = status; }

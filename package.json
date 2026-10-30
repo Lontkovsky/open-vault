@@ -1,5 +1,5 @@
 {
-  "name": "vidkrytyi-holos",
+  "name": "openvote",
   "version": "0.1.0-dev.1",
   "private": true,
   "type": "module",
@@ -9,6 +9,7 @@
   "scripts": {
     "bootstrap": "node scripts/bootstrap.mjs",
     "dev": "node scripts/dev.mjs",
+    "render:start": "node scripts/render-start.ts",
     "seed": "node scripts/seed.ts",
     "test": "vitest run",
     "test:e2e": "node scripts/e2e.mjs",
