@@ -23,7 +23,8 @@
       ],
       "prs": [
         "https://github.com/Lontkovsky/vidkrytyi-holos/pull/42",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/49"
+        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/49",
+        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/50"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
