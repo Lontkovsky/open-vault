@@ -46,19 +46,14 @@ The same environment also declares the three role databases from issue [#51](htt
 
 The future full-platform cutover reuses the same `openvote` service and disk: switch the Dockerfile/environment variables and compute plan, resume the three role databases, add the wildcard domain, and suspend `openvote-demand`. Do not start the full runtime without the attached persistent key state.
 
-## Paid deployment and DNS
+## Deployed resources and DNS
 
-After local checks, retained in-app Browser verification, pull-request CI and merge, sync the single Blueprint in the existing Render project, verify the demand service and all four databases, and suspend the three unused role databases.
+The approved Blueprint is deployed in the `Open Vote` project as one `openvote` web service. `openvote-demand` is active; `openvote-identity`, `openvote-ballot` and `openvote-management` are suspended. The 1 GB disk is attached at `/app/.runtime-disk` but the demand application does not use it.
 
-DNS remains unchanged until Render creates the approved service and displays its actual custom-domain target. At that point:
+The Ukraine.com.ua zone was exported before the approved DNS change. The apex uses Render's `216.24.57.1`; `www` is a CNAME to `openvote-launch.onrender.com.` because Render service slugs are immutable even after a display-name change. Mail, SPF and the unrelated wildcard record remain unchanged. Render serves a valid certificate for the apex and redirects `https://www.openvote.com.ua/` to the canonical apex over HTTPS.
 
-1. Export the current Ukraine.com.ua zone.
-2. Preserve mail and every unrelated record.
-3. Replace only the approved apex record with the exact Render value.
-4. Verify apex HTTPS and TLS in the retained in-app Browser session.
+## Hosted verification evidence
 
-The DNS replacement is a separate destructive action and requires confirmation immediately before it is performed. Do not guess Render targets or verification records.
+PR #57 exact-head CI passed and merged as `33042ef83209a290cc1df6ee450ee15405a0eb94`; the exact `main` workflow also passed. Render deploy `dep-dbifsjqvcj2c73fan370` reached `live`. In the retained in-app Browser, the apex displayed two accepted responses as `Підтримую 2`, `Не підтримую 0`, `Утримуюсь 0`, with the representativeness warning and no console warnings/errors. The same values remained readable without horizontal overflow at 390×844.
 
-## Hosted verification still required
-
-Local and CI success do not prove the public deployment. After an approved deployment, verify the landing and one synthetic response over `https://openvote.com.ua`, perform an actual Render service restart, reload the same browser session and confirm that the final recorded state persists. Until those checks pass, issue #53 remains open and no hosted-completion claim is valid.
+An actual Render restart made both the page and API temporarily return 502, then recover to 200. Reloading the same retained Browser tab after recovery showed the same `2/0/0` aggregate, proving that the two existing production rows survived the restart. No additional production response was submitted for verification.
