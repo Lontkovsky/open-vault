@@ -41,7 +41,7 @@ def variants(encoded):
 
     with tempfile.TemporaryDirectory() as temporary:
         directory = pathlib.Path(temporary)
-        subject = 'TEST-PERSON-0011'
+        subject = 'TEST-PERSON-0006'
         write(directory, 'voters.txt', subject + '\n')
         command(directory, 'setup', 'generate-credentials', '--uuid', verified['election']['uuid'],
                 '--group', 'Ed25519', '--file', 'voters.txt')
