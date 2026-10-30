@@ -15,16 +15,16 @@
         "5"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/16",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/17",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/19",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/20",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/33"
+        "https://github.com/Lontkovsky/openvote/issues/16",
+        "https://github.com/Lontkovsky/openvote/issues/17",
+        "https://github.com/Lontkovsky/openvote/issues/19",
+        "https://github.com/Lontkovsky/openvote/issues/20",
+        "https://github.com/Lontkovsky/openvote/issues/33"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/42",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/49",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/50"
+        "https://github.com/Lontkovsky/openvote/pull/42",
+        "https://github.com/Lontkovsky/openvote/pull/49",
+        "https://github.com/Lontkovsky/openvote/pull/50"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -50,14 +50,14 @@
         "15.3"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/19",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/20",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/31",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/41"
+        "https://github.com/Lontkovsky/openvote/issues/19",
+        "https://github.com/Lontkovsky/openvote/issues/20",
+        "https://github.com/Lontkovsky/openvote/issues/31",
+        "https://github.com/Lontkovsky/openvote/issues/41"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/42",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/49"
+        "https://github.com/Lontkovsky/openvote/pull/42",
+        "https://github.com/Lontkovsky/openvote/pull/49"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -85,13 +85,13 @@
         "15.4"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/25",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/31",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/33"
+        "https://github.com/Lontkovsky/openvote/issues/25",
+        "https://github.com/Lontkovsky/openvote/issues/31",
+        "https://github.com/Lontkovsky/openvote/issues/33"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/42",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/48"
+        "https://github.com/Lontkovsky/openvote/pull/42",
+        "https://github.com/Lontkovsky/openvote/pull/48"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -116,23 +116,28 @@
       "title": "Компрометація БД, логів і backups",
       "attackerCapabilities": "Reads one or all stores, runtime secrets and backups",
       "trustBoundary": "Runtime/host operator controls keys in this simulation",
-      "controls": "Separate DB users, sealed credentials, no request logging, public encrypted audit",
-      "residualRisk": "Full synthetic leak/reconstruction experiment and backup controls pending",
+      "controls": "Separate DB users, sealed credentials, no request logging, public encrypted audit, and fail-closed runtime disk/database binding",
+      "residualRisk": "Runtime persistence mismatch is tested; full synthetic leak/reconstruction and verified backup/restore remain pending",
       "requirements": [
         "15.1",
         "15.4"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/27",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/33"
+        "https://github.com/Lontkovsky/openvote/issues/27",
+        "https://github.com/Lontkovsky/openvote/issues/33",
+        "https://github.com/Lontkovsky/openvote/issues/51"
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
-      "evidenceState": "NotTested",
+      "evidenceState": "AutomatedTested",
       "implementationState": "Partial",
-      "verification": [],
-      "actualEvidence": [],
-      "remainingAcceptanceCriteria": "Full synthetic leak/reconstruction experiment and backup controls pending"
+      "verification": [
+        "tests/render-start.test.ts"
+      ],
+      "actualEvidence": [
+        "docs/DEPLOYMENT.md"
+      ],
+      "remainingAcceptanceCriteria": "Full synthetic leak/reconstruction experiment and a verified backup/restore exercise that preserves ballots and voting finality remain pending"
     },
     {
       "id": "A05",
@@ -146,9 +151,9 @@
         "15.5"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/24",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/26",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/29"
+        "https://github.com/Lontkovsky/openvote/issues/24",
+        "https://github.com/Lontkovsky/openvote/issues/26",
+        "https://github.com/Lontkovsky/openvote/issues/29"
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
@@ -180,12 +185,12 @@
         "15.5"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/21",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/22",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/29"
+        "https://github.com/Lontkovsky/openvote/issues/21",
+        "https://github.com/Lontkovsky/openvote/issues/22",
+        "https://github.com/Lontkovsky/openvote/issues/29"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/49"
+        "https://github.com/Lontkovsky/openvote/pull/49"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -212,8 +217,8 @@
         "15.6"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/21",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/30"
+        "https://github.com/Lontkovsky/openvote/issues/21",
+        "https://github.com/Lontkovsky/openvote/issues/30"
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
@@ -235,9 +240,9 @@
         "15.7"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/27",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/29",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/33"
+        "https://github.com/Lontkovsky/openvote/issues/27",
+        "https://github.com/Lontkovsky/openvote/issues/29",
+        "https://github.com/Lontkovsky/openvote/issues/33"
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
@@ -268,10 +273,10 @@
         "15.8"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/12",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/13",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/35",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/40"
+        "https://github.com/Lontkovsky/openvote/issues/12",
+        "https://github.com/Lontkovsky/openvote/issues/13",
+        "https://github.com/Lontkovsky/openvote/issues/35",
+        "https://github.com/Lontkovsky/openvote/issues/40"
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
@@ -293,12 +298,12 @@
         "15.9"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/17",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/18"
+        "https://github.com/Lontkovsky/openvote/issues/17",
+        "https://github.com/Lontkovsky/openvote/issues/18"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/43",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/pull/45"
+        "https://github.com/Lontkovsky/openvote/pull/43",
+        "https://github.com/Lontkovsky/openvote/pull/45"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -327,8 +332,8 @@
         "15.10"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/24",
-        "https://github.com/Lontkovsky/vidkrytyi-holos/issues/27"
+        "https://github.com/Lontkovsky/openvote/issues/24",
+        "https://github.com/Lontkovsky/openvote/issues/27"
       ],
       "prs": [],
       "defenseOutcome": "KnownLimitation",

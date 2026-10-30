@@ -276,7 +276,7 @@ describe('real service boundaries', () => {
       child.stdin.end(JSON.stringify({ archive: setup.archive }));
     }));
     const ballotConfig = await readConfig('ballot'), identityConfig = await readConfig('identity');
-    const box = await ballotApp({ ...ballotConfig, environment: 'test' }), identity = await identityApp(identityConfig);
+    const box = await ballotApp({ ...ballotConfig, environment: 'test' }, 'http://localhost:5173'), identity = await identityApp(identityConfig, 'http://localhost:5173');
     const ballotStore = database(ballotConfig), identityStore = database(identityConfig);
     const boxHeaders = { authorization: 'Bearer ' + ballotConfig.serviceToken }, identityHeaders = { authorization: 'Bearer ' + identityConfig.serviceToken };
     const registration = { id: setup.uuid, electionRaw: setup.electionRaw, archive: setup.archive };

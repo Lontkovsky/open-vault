@@ -21,6 +21,9 @@ services:
     entrypoint: ["python3", "/tools/bridge.py"]
     environment:
       CORE_ACTIONS: verify,accept,close,verify-share,finalize
+      CORE_HOST: 0.0.0.0
+      CORE_PORT: 4310
+      CORE_TOKEN_PATH: /run/secrets/core-token
     ports: ["127.0.0.1:4310:4310"]
     volumes:
       - ./tools:/tools:ro
@@ -39,7 +42,10 @@ services:
     platform: linux/amd64
     entrypoint: ["python3", "/tools/bridge.py"]
     environment:
-      CORE_ACTIONS: setup
+      CORE_ACTIONS: setup,share,generate-test-ballot
+      CORE_HOST: 0.0.0.0
+      CORE_PORT: 4310
+      CORE_TOKEN_PATH: /run/secrets/core-token
     ports: ["127.0.0.1:4311:4310"]
     volumes:
       - ./tools:/tools:ro

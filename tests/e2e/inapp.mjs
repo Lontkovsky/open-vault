@@ -112,7 +112,10 @@ export async function createRunner(tab) {
       assertions.push('Moderator completes rubric and submits a reasoned review');
     },
     async review(assertions) {
-      await p.getByRole('status').filter({ hasText: 'Рішення зафіксовано.' }).waitFor({ state: 'visible', timeoutMs: 30000 });
+      await until(async () => {
+        const status = p.getByRole('status').filter({ hasText: 'Рішення зафіксовано.' });
+        return await status.count() === 1 && await status.isVisible();
+      }, 'Review completion');
       if (await p.getByRole('link', { name: title, exact: true }).count() !== 0) throw new Error('REVIEWED_POLL_STILL_QUEUED');
       await openPoll(); await p.getByText('Голосування відкрите', { exact: true }).waitFor({ state: 'visible' });
       if (await p.getByRole('link', { name: 'Редагувати чернетку', exact: true }).count() !== 0) throw new Error('OPEN_POLL_EDIT_VISIBLE');
@@ -129,7 +132,10 @@ export async function createRunner(tab) {
     async voteThree(assertions) { await participate('TEST-PERSON-0007', 'A', 'Утримуюсь'); await visible('heading', 'Бюлетень прийнято'); assertions.push('Abstention is accepted as the third choice'); },
     async duplicate(assertions) {
       await participate('TEST-PERSON-0005', 'B', 'Не підтримую');
-      await p.getByText('За цим правом участі вже прийнято остаточний голос.', { exact: true }).waitFor({ state: 'visible', timeoutMs: 30000 });
+      await until(async () => {
+        const duplicate = p.getByText('За цим правом участі вже прийнято остаточний голос.', { exact: true });
+        return await duplicate.count() === 1 && await duplicate.isVisible();
+      }, 'Duplicate final-vote rejection');
       assertions.push('Same person through another provider cannot change final vote');
     },
     async tallyStart(assertions) {

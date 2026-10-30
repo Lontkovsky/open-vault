@@ -2,7 +2,15 @@ import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
 import { FinalSet, verifyFinal } from '../packages/domain/src/checkpoints.ts';
 import { Ceremony, writeOnce } from '../apps/api/src/provisioning.ts';
-import { localCore } from './local-core.ts';
+import { core, Failure, readConfig } from '../apps/api/src/common.ts';
+
+async function operatorCore(config: Awaited<ReturnType<typeof readConfig>>, input: unknown, ceremony = false): Promise<unknown> {
+  try { return await core(config, input, ceremony); }
+  catch (error) {
+    if (error instanceof Failure && error.statusCode === 422) throw new Error('LOCAL_REFERENCE_REJECTED');
+    throw new Error('LOCAL_REFERENCE_UNAVAILABLE');
+  }
+}
 
 // Shared by the actual operator CLI and adversarial tests. No private key is
 // read and no share is created until the native archive and finality guard pass.
@@ -11,7 +19,8 @@ export async function prepareTrusteeShare(input: unknown, trust: unknown, direct
   let prior: string | null = null;
   try { prior = await readFile(`${directory}/final.sha256`, 'utf8'); }
   catch (error) { if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') throw error; }
-  const reference = await localCore({ action: 'verify', archive: final.archive });
+  const config = await readConfig('ballot');
+  const reference = await operatorCore(config, { action: 'verify', archive: final.archive });
   const { finalHash } = verifyFinal(final, trust, reference, now, prior);
   await writeOnce(`${directory}/final.sha256`, finalHash);
   let share: string;
@@ -20,7 +29,7 @@ export async function prepareTrusteeShare(input: unknown, trust: unknown, direct
     if (!(error instanceof Error) || !('code' in error) || error.code !== 'ENOENT') throw error;
     const trustee = Ceremony.shape.trustees.element.parse(JSON.parse(await readFile(`${directory}/private.json`, 'utf8')));
     if (trustee.id !== trusteeId) throw new Error('TRUSTEE_ROLE_MISMATCH');
-    share = z.strictObject({ share: z.string() }).parse(await localCore({ action: 'share', archive: final.archive, trustee })).share;
+    share = z.strictObject({ share: z.string() }).parse(await operatorCore(config, { action: 'share', archive: final.archive, trustee }, true)).share;
     await writeOnce(`${directory}/share.jsons`, share);
   }
   return share;

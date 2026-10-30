@@ -1,0 +1,95 @@
+worker_processes 1;
+pid /tmp/openvote-nginx.pid;
+error_log stderr notice;
+
+events {
+  worker_connections 1024;
+}
+
+http {
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+  access_log off;
+  server_tokens off;
+  sendfile on;
+  client_body_temp_path /tmp/openvote-client-body;
+  proxy_temp_path /tmp/openvote-proxy;
+  fastcgi_temp_path /tmp/openvote-fastcgi;
+  uwsgi_temp_path /tmp/openvote-uwsgi;
+  scgi_temp_path /tmp/openvote-scgi;
+  client_max_body_size 1m;
+
+  server {
+    listen {{PORT}} default_server;
+    server_name _;
+
+    location = /health {
+      proxy_pass http://127.0.0.1:4303/health;
+      proxy_set_header Host management.openvote.com.ua;
+      proxy_connect_timeout 5s;
+      proxy_read_timeout 5s;
+    }
+
+    location / {
+      return 421;
+    }
+  }
+
+  server {
+    listen {{PORT}};
+    server_name openvote.com.ua www.openvote.com.ua;
+    root /app/apps/web/dist;
+    index index.html;
+
+    add_header Referrer-Policy no-referrer always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Cache-Control no-store always;
+
+    location ^~ /.runtime {
+      return 404;
+    }
+
+    location / {
+      try_files $uri $uri/ /index.html;
+    }
+  }
+
+  server {
+    listen {{PORT}};
+    server_name identity.openvote.com.ua;
+
+    location / {
+      proxy_pass http://127.0.0.1:4301;
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-Proto https;
+      proxy_connect_timeout 5s;
+      proxy_read_timeout 105s;
+    }
+  }
+
+  server {
+    listen {{PORT}};
+    server_name ballot.openvote.com.ua;
+
+    location / {
+      proxy_pass http://127.0.0.1:4302;
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-Proto https;
+      proxy_connect_timeout 5s;
+      proxy_read_timeout 105s;
+    }
+  }
+
+  server {
+    listen {{PORT}};
+    server_name management.openvote.com.ua;
+
+    location / {
+      proxy_pass http://127.0.0.1:4303;
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-Proto https;
+      proxy_connect_timeout 5s;
+      proxy_read_timeout 105s;
+    }
+  }
+}

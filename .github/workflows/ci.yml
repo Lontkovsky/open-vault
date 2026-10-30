@@ -20,7 +20,11 @@ jobs:
       - name: Public artifact hygiene
         run: python3 scripts/scan-public.py
       - name: Build pinned reference core
-        run: docker build --platform linux/amd64 -f infra/crypto.Dockerfile -t openvote-crypto:3.3.0 .
+        run: docker build --platform linux/amd64 --target crypto-runtime -f infra/crypto.Dockerfile -t openvote-crypto:3.3.0 .
+      - name: Build and check Render runtime
+        run: |
+          docker build --platform linux/amd64 --target render-runtime -f infra/crypto.Dockerfile -t openvote-render:ci .
+          docker run --rm --platform linux/amd64 --entrypoint node openvote-render:ci scripts/test-render-gateway.ts
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: 24.20.0

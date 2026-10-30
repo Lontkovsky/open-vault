@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
-const children = ['provider-A', 'provider-B', 'identity', 'ballot', 'management'].map(role => spawn(process.execPath, ['--watch', 'apps/api/src/server.ts', role], { stdio: 'inherit' }));
+const serviceEnvironment = { ...process.env, OPENVOTE_PUBLIC_ORIGIN: 'http://localhost:5173' };
+const children = ['provider-A', 'provider-B', 'identity', 'ballot', 'management'].map(role => spawn(process.execPath, ['--watch', 'apps/api/src/server.ts', role], { stdio: 'inherit', env: serviceEnvironment }));
 children.push(spawn('pnpm', ['--filter', '@openvote/web', 'dev'], { stdio: 'inherit' }));
 let stopping = false;
 function stop() { if (stopping) return; stopping = true; for (const child of children) child.kill('SIGTERM'); }

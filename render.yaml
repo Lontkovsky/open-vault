@@ -1,0 +1,66 @@
+previews:
+  generation: off
+
+projects:
+  - name: Open Vote
+    environments:
+      - name: demo
+        services:
+          - type: web
+            name: openvote-demo
+            runtime: docker
+            plan: 1c-2g
+            region: frankfurt
+            autoDeployTrigger: checksPass
+            dockerfilePath: ./infra/crypto.Dockerfile
+            dockerContext: .
+            healthCheckPath: /health
+            domains:
+              - openvote.com.ua
+              - "*.openvote.com.ua"
+            disk:
+              name: openvote-runtime
+              mountPath: /app/.runtime-disk
+              sizeGB: 1
+            envVars:
+              - key: OPENVOTE_ENVIRONMENT
+                value: demo
+              - key: OPENVOTE_PUBLIC_ORIGIN
+                value: https://openvote.com.ua
+              - key: IDENTITY_DATABASE_URL
+                fromDatabase:
+                  name: openvote-identity
+                  property: connectionString
+              - key: BALLOT_DATABASE_URL
+                fromDatabase:
+                  name: openvote-ballot
+                  property: connectionString
+              - key: MANAGEMENT_DATABASE_URL
+                fromDatabase:
+                  name: openvote-management
+                  property: connectionString
+        databases:
+          - name: openvote-identity
+            databaseName: openvote_identity
+            user: openvote_identity
+            plan: 0.1c-256mb
+            diskSizeGB: 1
+            postgresMajorVersion: "18"
+            region: frankfurt
+            ipAllowList: []
+          - name: openvote-ballot
+            databaseName: openvote_ballot
+            user: openvote_ballot
+            plan: 0.1c-256mb
+            diskSizeGB: 1
+            postgresMajorVersion: "18"
+            region: frankfurt
+            ipAllowList: []
+          - name: openvote-management
+            databaseName: openvote_management
+            user: openvote_management
+            plan: 0.1c-256mb
+            diskSizeGB: 1
+            postgresMajorVersion: "18"
+            region: frankfurt
+            ipAllowList: []
