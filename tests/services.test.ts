@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { z } from 'zod';
-import { Envelope, Manifest, Poll, Receipt, ResultContract } from '../packages/domain/src/index.ts';
+import { Envelope, Manifest, Poll, Receipt, ResultContract, Session } from '../packages/domain/src/index.ts';
 import { database, pseudonym, readConfig, required, sha } from '../apps/api/src/common.ts';
 import { call, createPoll, fixtureContent, generateBallot, login, ok, approvedReview } from './support/flow.ts';
 import { FinalSet, Trust, verifyFinal } from '../packages/domain/src/checkpoints.ts';
@@ -36,6 +36,63 @@ afterAll(async () => {
 }, 20000);
 
 describe('real service boundaries', () => {
+  it('applies author draft, publication, cooldown and simultaneous-open limits across providers', async () => {
+    const authorA = await login('TEST-PERSON-0011', 'A'), authorB = await login('TEST-PERSON-0011', 'B');
+    const moderator = await login('TEST-PERSON-0012', 'A'), tokens = [authorA.token, authorB.token, moderator.token];
+    const config = await readConfig('management'), pool = database(config), pollIds: string[] = [];
+    const clearPolls = async () => {
+      if (pollIds.length === 0) return;
+      await pool.query('DELETE FROM events WHERE poll_id=ANY($1::uuid[])', [pollIds]);
+      await pool.query('DELETE FROM appeals WHERE poll_id=ANY($1::uuid[])', [pollIds]);
+      await pool.query('DELETE FROM polls WHERE id=ANY($1::uuid[])', [pollIds]);
+      pollIds.length = 0;
+    };
+    const reviewDraft = async (question: string) => {
+      const { poll } = z.object({ poll: Poll }).parse(await ok('management', '/v1/drafts', 'POST', fixtureContent(new Date(Date.now() + 3600000), question), authorA.token));
+      pollIds.push(poll.id);
+      await ok('management', `/v1/polls/${poll.id}/submit`, 'POST', {}, authorA.token);
+      return poll;
+    };
+    try {
+      expect(config.quotas).toEqual({ daily: 3, cooldownSeconds: 60, simultaneousOpen: 2 });
+      const introspection = await fetch('http://127.0.0.1:4301/internal/introspect', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + required(config.identityToken) }, body: JSON.stringify({ token: authorA.token }) });
+      const author = Session.parse(await introspection.json()).person;
+      expect(introspection.status).toBe(200);
+
+      const paraphrases = await Promise.all(Array.from({ length: 7 }, (_, index) => call('management', '/v1/drafts', 'POST',
+        fixtureContent(new Date(Date.now() + 3600000), `Чи підтримуєте синтетичне перефразоване питання номер ${index + 1}?`), index % 2 === 0 ? authorA.token : authorB.token)));
+      for (const response of paraphrases) if (response.status === 200) pollIds.push(z.object({ poll: Poll }).parse(response.value).poll.id);
+      expect(paraphrases.filter(response => response.status === 200)).toHaveLength(6);
+      expect(paraphrases.filter(response => response.status === 429).map(response => response.value)).toEqual([{ error: 'DRAFT_LIMIT_REACHED' }]);
+      await clearPolls();
+
+      const seedPublished = async (state: 'Closed' | 'Open', publishedAt: Date, question: string) => {
+        const id = randomUUID(), content = fixtureContent(new Date(Date.now() + 3600000), question);
+        const poll = Poll.parse({ id, version: 1, state, content, createdAt: new Date().toISOString(), cryptoId: randomUUID(), manifestRaw: '{}', review: approvedReview, methodologyStatus: 'Reviewed', contentStatus: 'Visible' });
+        await pool.query('INSERT INTO polls(id,author_person,doc,published_at,created_at) VALUES($1,$2,$3,$4,$5)', [id, author, poll, publishedAt, poll.createdAt]);
+        pollIds.push(id);
+      };
+
+      const daily = await reviewDraft('Чи застосовується добова квота до підтвердженого автора?');
+      for (let index = 0; index < 3; index++) await seedPublished('Closed', new Date(Date.now() - (index + 2) * 3600000), `Чи враховано попередню публікацію номер ${index + 1}?`);
+      expect(await call('management', `/v1/polls/${daily.id}/review`, 'POST', approvedReview, moderator.token)).toEqual({ status: 429, value: { error: 'PUBLICATION_QUOTA_REACHED' } });
+      await clearPolls();
+
+      const cooldown = await reviewDraft('Чи застосовується пауза між публікаціями автора?');
+      await seedPublished('Closed', new Date(), 'Чи щойно опубліковано попереднє синтетичне питання?');
+      expect(await call('management', `/v1/polls/${cooldown.id}/review`, 'POST', approvedReview, moderator.token)).toEqual({ status: 429, value: { error: 'PUBLICATION_COOLDOWN' } });
+      await clearPolls();
+
+      const simultaneous = await reviewDraft('Чи обмежено кількість одночасно відкритих питань автора?');
+      for (let index = 0; index < 2; index++) await seedPublished('Open', new Date(Date.now() - (index + 2) * 3600000), `Чи відкрите синтетичне питання номер ${index + 1}?`);
+      expect(await call('management', `/v1/polls/${simultaneous.id}/review`, 'POST', approvedReview, moderator.token)).toEqual({ status: 429, value: { error: 'OPEN_POLL_QUOTA_REACHED' } });
+    } finally {
+      await clearPolls();
+      await pool.end();
+      for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
+    }
+  }, 30000);
+
   it('deduplicates A/B, replays late return and exposes outages without weaker admission', async () => {
     const [a, b] = await Promise.all([login('TEST-PERSON-0002', 'A'), login('TEST-PERSON-0002', 'B')]);
     const cfg = await readConfig('identity');

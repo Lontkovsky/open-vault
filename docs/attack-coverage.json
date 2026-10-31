@@ -221,22 +221,27 @@
       "attackerCapabilities": "One confirmed author creates many paraphrased questions",
       "trustBoundary": "Cross-provider deduplication; nonpersonalized catalog",
       "controls": "Draft cap, publication quotas/cooldown/open limit; visible chronological sorting; similar search",
-      "residualRisk": "Mass publishing and quota bypass tests pending",
+      "residualRisk": "An operator with source or database control can bypass application quotas; external observation and governance remain required",
       "requirements": [
         "15.1",
         "15.6"
       ],
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/21",
-        "https://github.com/Lontkovsky/openvote/issues/30"
+        "https://github.com/Lontkovsky/openvote/issues/29"
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
-      "evidenceState": "NotTested",
-      "implementationState": "Partial",
-      "verification": [],
-      "actualEvidence": [],
-      "remainingAcceptanceCriteria": "Mass publishing and quota bypass tests pending"
+      "evidenceState": "AutomatedTested",
+      "implementationState": "Implemented",
+      "verification": [
+        "tests/services.test.ts"
+      ],
+      "actualEvidence": [
+        "Seven concurrent paraphrased drafts sent through provider A and B produced exactly six accepted drafts and one DRAFT_LIMIT_REACHED response for the shared deduplicated author",
+        "The actual management API rejected a fourth publication within 24 hours, a publication during the configured cooldown and a third simultaneously open poll with distinct exact error contracts"
+      ],
+      "remainingAcceptanceCriteria": "V018 development acceptance is covered; operator bypass and production governance remain separate risks"
     },
     {
       "id": "A08",
