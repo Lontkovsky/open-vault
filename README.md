@@ -48,6 +48,8 @@ The integration tests use live local services and native cryptography. They remo
 
 [Reproducible client releases](docs/REPRODUCIBLE_RELEASE.md) define the two clean client builds, complete byte manifests, checksums, CycloneDX SBOM, source/toolchain provenance and the separately trusted monitor that detects substituted server JavaScript. The self-generated evidence is not an independent signature and does not prove identical delivery to every user.
 
+[Development release procedure](docs/RELEASE.md) is the single candidate checklist. It records the exact clean-checkout, command, retained-Browser, public-evidence and GitHub prerelease gates, while keeping provider contracts, legal approval, independent review and independent trustees visibly open as Production Readiness work. No public release exists yet.
+
 <a id="verification"></a>
 
 Verify the archive downloaded by the browser without identity storage:
