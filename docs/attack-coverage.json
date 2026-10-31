@@ -78,8 +78,8 @@
       "title": "Встановлення вибору конкретної людини",
       "attackerCapabilities": "Operator correlates metadata or requests selected decryption",
       "trustBoundary": "Honest trustee clients; enough independent key holders",
-      "controls": "Client Belenios encryption; native trustee guard checks manifest, aggregate, final set, deadline and minimum group; original check_factor validates each share before storage; durable one-final-set binding",
-      "residualRisk": "First self-consistent signed fork requires external acknowledgement evidence; issuer links person to ciphertext; sufficient key collusion and unanimity can reveal choices",
+      "controls": "Client Belenios encryption; native trustee guard checks manifest, aggregate, final set, deadline and minimum group; original check_factor validates each share before storage; durable one-final-set binding; receipts omit choice and participant secrets",
+      "residualRisk": "Combined identity/ballot/runtime access links a pseudonym to ciphertext; real-person mapping depends on provider evidence or enumeration. First-fork completeness, sufficient trustee collusion, compromised devices, disclosed participant secrets and unanimity can reveal choices",
       "requirements": [
         "15.1",
         "15.4"
@@ -100,30 +100,33 @@
         "tests/services.test.ts",
         "tests/trustees.test.ts",
         "tools/test_reference.py",
-        "tests/e2e/inapp.mjs"
+        "tests/e2e/inapp.mjs",
+        "docs/PRIVACY_COMPROMISE.md"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
         "artifacts/reference/reference-report.json",
         "artifacts/e2e/report.json",
         "artifacts/e2e/verification.json",
-        "docs/TRUSTEE_VERIFICATION.md"
+        "docs/TRUSTEE_VERIFICATION.md",
+        "Two independent polls proved that combined identity and ballot stores plus the runtime sealing key map the same pseudonymous voter to both accepted ciphertexts without publishing any credential or tracker",
+        "Each open native archive verified with one encrypted ballot and no result; the strict receipt contained no answer or private credential"
       ],
-      "remainingAcceptanceCriteria": "Independently retained acknowledgement journal and first-fork completeness remain open; key-collusion and identity-linkage experiments remain separate work"
+      "remainingAcceptanceCriteria": "Identity-linkage behavior is now measured. Independently retained first-fork evidence, provider-to-real-person mapping review, trustee-collusion resistance and compromised-client resistance remain explicit limits"
     },
     {
       "id": "A04",
       "title": "Компрометація БД, логів і backups",
       "attackerCapabilities": "Reads one or all stores, runtime secrets and backups",
       "trustBoundary": "Runtime/host operator controls keys in this simulation",
-      "controls": "Separate DB users, sealed credentials, no request logging, public encrypted audit, and fail-closed runtime disk/database binding",
-      "residualRisk": "Runtime persistence mismatch is tested; full synthetic leak/reconstruction and verified backup/restore remain pending",
+      "controls": "Separate DB users and origins, sealed credentials, no application request logging, public encrypted audit, fail-closed runtime disk/database binding and a two-poll synthetic compromise matrix",
+      "residualRisk": "A combined operator with identity and ballot stores plus the runtime sealing key can link pseudonymous participation to ciphertext. Infrastructure/provider log behavior and verified backup/restore finality remain pending operational evidence",
       "requirements": [
         "15.1",
         "15.4"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/openvote/issues/27",
+        "https://github.com/Lontkovsky/openvote/issues/31",
         "https://github.com/Lontkovsky/openvote/issues/33",
         "https://github.com/Lontkovsky/openvote/issues/51"
       ],
@@ -132,12 +135,15 @@
       "evidenceState": "AutomatedTested",
       "implementationState": "Partial",
       "verification": [
-        "tests/render-start.test.ts"
+        "tests/render-start.test.ts",
+        "tests/services.test.ts"
       ],
       "actualEvidence": [
-        "docs/DEPLOYMENT.md"
+        "docs/DEPLOYMENT.md",
+        "docs/PRIVACY_COMPROMISE.md",
+        "Identity-only, ballot-only, management-only, combined private stores and public-plus-internal evidence are evaluated separately for person, participation, cross-poll, ciphertext and choice linkage"
       ],
-      "remainingAcceptanceCriteria": "Full synthetic leak/reconstruction experiment and a verified backup/restore exercise that preserves ballots and voting finality remain pending"
+      "remainingAcceptanceCriteria": "The synthetic leak/reconstruction experiment is covered. A verified backup/restore exercise preserving accepted ballots and voting finality plus production log/provider custody evidence remain pending"
     },
     {
       "id": "A05",
@@ -345,23 +351,30 @@
       "title": "Купівля голосів і примус",
       "attackerCapabilities": "Credential transfer, supervised screen, compromised device or private keys",
       "trustBoundary": "Participant device and sufficient key holders",
-      "controls": "Pre-vote warning; receipts omit choice, identity and encryption secrets",
-      "residualRisk": "Belenios integration provides neither receipt-freeness nor coercion resistance; explicit limitation experiments pending",
+      "controls": "Pre-vote warning; strict receipts omit choice, identity, private credential and encryption secrets; storage experiment distinguishes inclusion evidence from choice evidence",
+      "residualRisk": "Belenios integration provides neither receipt-freeness nor coercion resistance. Credential transfer, supervised screens, disclosed randomness, compromised devices, sufficient trustee collusion and unanimity remain limitations",
       "requirements": [
         "15.1",
         "15.10"
       ],
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/24",
-        "https://github.com/Lontkovsky/openvote/issues/27"
+        "https://github.com/Lontkovsky/openvote/issues/31"
       ],
       "prs": [],
       "defenseOutcome": "KnownLimitation",
-      "evidenceState": "NotTested",
+      "evidenceState": "AutomatedTested",
       "implementationState": "Partial",
-      "verification": [],
-      "actualEvidence": [],
-      "remainingAcceptanceCriteria": "Belenios integration provides neither receipt-freeness nor coercion resistance; explicit limitation experiments pending"
+      "verification": [
+        "tests/services.test.ts",
+        "docs/GUARANTEES.md",
+        "docs/PRIVACY_COMPROMISE.md"
+      ],
+      "actualEvidence": [
+        "The strict signed receipt parsed to protocol, poll ID, manifest hash and tracker only; no answer, person, private credential or randomness was present",
+        "Credential transfer, supervised screen, randomness disclosure, tracker use and compromised-device scenarios are individually classified without claiming receipt-freeness"
+      ],
+      "remainingAcceptanceCriteria": "The declared protocol does not provide receipt-freeness or coercion resistance; production client integrity and organizational trustee independence remain separate work"
     }
   ]
 }

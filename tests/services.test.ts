@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { z } from 'zod';
 import { Envelope, Manifest, Poll, Receipt, RemovedPoll, ResultContract, Session } from '../packages/domain/src/index.ts';
-import { database, pseudonym, readConfig, required, sha } from '../apps/api/src/common.ts';
+import { database, pseudonym, readConfig, required, sha, unseal } from '../apps/api/src/common.ts';
 import { call, createPoll, fixtureContent, generateBallot, login, ok, approvedReview } from './support/flow.ts';
 import { FinalSet, Trust, verifyFinal } from '../packages/domain/src/checkpoints.ts';
 import { localCore } from '../scripts/local-core.ts';
@@ -179,6 +179,74 @@ describe('real service boundaries', () => {
       for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
     }
   }, 30000);
+
+  it('measures identity, participation and ciphertext linkage across separated stores', async () => {
+    const authorA = await login('TEST-PERSON-0006', 'A'), authorB = await login('TEST-PERSON-0007', 'B');
+    const voter = await login('TEST-PERSON-0008', 'A'), moderator = await login('TEST-PERSON-0012', 'A');
+    const tokens = [authorA.token, authorB.token, voter.token, moderator.token];
+    const identityConfig = await readConfig('identity'), identityStore = database(identityConfig);
+    const ballotStore = database(await readConfig('ballot')), managementStore = database(await readConfig('management'));
+    const testPolls: { id: string; cryptoId: string }[] = [];
+    const flows: { privateCredential: string; publicCredential: string; tracker: string }[] = [];
+    try {
+      for (const [index, author] of [authorA, authorB].entries()) {
+        const poll = await createPoll(author.token, moderator.token, fixtureContent(new Date(Date.now() + 3600000),
+          `Чи підтримуєте синтетичну перевірку розділення сховищ номер ${index + 1}?`));
+        if (poll.cryptoId === null) throw new Error('PRIVACY_TEST_POLL_NOT_PROVISIONED');
+        const pollId = poll.cryptoId;
+        const recorded = { id: poll.id, cryptoId: pollId };
+        created.push(recorded);
+        testPolls.push(recorded);
+        const election = required((await ballotStore.query<{ archive: string }>('SELECT archive FROM elections WHERE id=$1', [pollId])).rows[0]);
+        const right = z.object({ credential: z.string() }).parse(await ok('identity', `/v1/credentials/${pollId}`, 'POST', {}, voter.token));
+        const ballot = await generateBallot(election.archive, right.credential, index);
+        await ok('ballot', `/v1/elections/${pollId}/ballots`, 'POST', { ballot });
+      }
+
+      const person = pseudonym('TEST-PERSON-0008', required(identityConfig.dedupKey));
+      const issued = await identityStore.query<{ poll_id: string; credential_sealed: string }>(
+        'SELECT poll_id,credential_sealed FROM credentials WHERE person=$1 AND poll_id=ANY($2::text[]) ORDER BY poll_id', [person, testPolls.map(value => value.cryptoId)]);
+      const cast = await ballotStore.query<{ poll_id: string; credential: string; tracker: string; receipt: unknown }>(
+        'SELECT poll_id,credential,tracker,receipt FROM ballots WHERE poll_id=ANY($1::text[]) ORDER BY poll_id', [testPolls.map(value => value.cryptoId)]);
+      expect(issued.rows).toHaveLength(2);
+      expect(cast.rows).toHaveLength(2);
+
+      for (const row of cast.rows) {
+        const identityRow = required(issued.rows.find(value => value.poll_id === row.poll_id));
+        const privateCredential = unseal(identityRow.credential_sealed, required(identityConfig.sealingKey));
+        const election = required((await ballotStore.query<{ archive: string }>('SELECT archive FROM elections WHERE id=$1', [row.poll_id])).rows[0]);
+        const derived = z.object({ credential: z.string() }).parse(JSON.parse(await generateBallot(election.archive, privateCredential, 2)));
+        expect(derived.credential).toBe(row.credential);
+        const receipt = Receipt.parse(JSON.parse(Envelope.parse(row.receipt).payload));
+        expect(receipt).toEqual({ protocol: 'openvote-receipt-v1', pollId: row.poll_id, manifestHash: expect.any(String), tracker: row.tracker });
+        expect(Object.keys(receipt)).toEqual(['protocol', 'pollId', 'manifestHash', 'tracker']);
+        const report = CoreReport.parse(await localCore({ action: 'verify', archive: election.archive }));
+        expect(report).toMatchObject({ ballotCount: 1, result: null });
+        flows.push({ privateCredential, publicCredential: row.credential, tracker: row.tracker });
+      }
+
+      expect(new Set(flows.map(value => value.privateCredential)).size).toBe(2);
+      expect(new Set(flows.map(value => value.publicCredential)).size).toBe(2);
+      expect(new Set(flows.map(value => value.tracker)).size).toBe(2);
+      const identityColumns = await identityStore.query<{ column_name: string }>(
+        "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='credentials' ORDER BY ordinal_position");
+      expect(identityColumns.rows.map(row => row.column_name)).toEqual(['poll_id', 'person', 'credential_sealed', 'manifest_hash', 'closes_at', 'revoked']);
+      const ballotColumns = await ballotStore.query<{ column_name: string }>(
+        "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='ballots' ORDER BY ordinal_position");
+      expect(ballotColumns.rows.map(row => row.column_name)).toEqual(['poll_id', 'credential', 'tracker', 'receipt']);
+      const managementColumns = await managementStore.query<{ column_name: string }>(
+        "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='polls' ORDER BY ordinal_position");
+      expect(managementColumns.rows.map(row => row.column_name)).toEqual(['id', 'author_person', 'doc', 'published_at', 'created_at']);
+      const voterAsAuthor = await managementStore.query<{ count: number }>(
+        'SELECT count(*)::int AS count FROM polls WHERE id=ANY($1::uuid[]) AND author_person=$2', [testPolls.map(value => value.id), person]);
+      expect(required(voterAsAuthor.rows[0]).count).toBe(0);
+    } finally {
+      await identityStore.end();
+      await ballotStore.end();
+      await managementStore.end();
+      for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
+    }
+  }, 120000);
 
   it('deduplicates A/B, replays late return and exposes outages without weaker admission', async () => {
     const [a, b] = await Promise.all([login('TEST-PERSON-0002', 'A'), login('TEST-PERSON-0002', 'B')]);
