@@ -256,10 +256,12 @@
         "tests/services.test.ts"
       ],
       "actualEvidence": [
+        "The actual management API accepted one pseudonymous draft and its edit through the same person recovered by another provider, rejected an unverified author, a different author, missing bilateral arguments, a missing source and editing after submission",
+        "Three distinct synthetic similar questions remained separate and followed the same explicit created-at-descending and identifier tie-break order as the nonpersonalized public catalogue; the private review item was absent",
         "Seven concurrent paraphrased drafts sent through provider A and B produced exactly six accepted drafts and one DRAFT_LIMIT_REACHED response for the shared deduplicated author",
         "The actual management API rejected a fourth publication within 24 hours, a publication during the configured cooldown and a third simultaneously open poll with distinct exact error contracts"
       ],
-      "remainingAcceptanceCriteria": "V018 development acceptance is covered; operator bypass and production governance remain separate risks"
+      "remainingAcceptanceCriteria": "V010 and V018 development acceptance is covered; operator bypass and production governance remain separate risks"
     },
     {
       "id": "A08",

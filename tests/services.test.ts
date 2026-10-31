@@ -38,6 +38,87 @@ afterAll(async () => {
 }, 20000);
 
 describe('real service boundaries', () => {
+  it('enforces verified pseudonymous drafting, required sources, similar search and chronological catalog order', async () => {
+    const authorA = await login('TEST-PERSON-0004', 'A'), authorB = await login('TEST-PERSON-0004', 'B');
+    const other = await login('TEST-PERSON-0005', 'A'), unverified = await login('TEST-PERSON-0010', 'B');
+    const tokens = [authorA.token, authorB.token, other.token, unverified.token];
+    const config = await readConfig('management'), pool = database(config), pollIds: string[] = [];
+    try {
+      const content = fixtureContent(new Date(Date.now() + 3600000), 'Чи підтверджує синтетичний сценарій межі авторської чернетки?');
+      expect(await call('management', '/v1/drafts', 'POST', content, unverified.token))
+        .toEqual({ status: 403, value: { error: 'VERIFIED_OWNER_REQUIRED' } });
+      expect(await call('management', '/v1/drafts', 'POST', { ...content, argumentsFor: [] }, authorA.token))
+        .toEqual({ status: 400, value: { error: 'INVALID_INPUT' } });
+      expect(await call('management', '/v1/drafts', 'POST', { ...content, argumentsAgainst: [] }, authorA.token))
+        .toEqual({ status: 400, value: { error: 'INVALID_INPUT' } });
+      expect(await call('management', '/v1/drafts', 'POST', {
+        ...content, argumentsFor: [{ text: 'Синтетичний аргумент без джерела має бути відхилений.' }],
+      }, authorA.token)).toEqual({ status: 400, value: { error: 'INVALID_INPUT' } });
+
+      const draft = z.object({ poll: Poll }).parse(await ok('management', '/v1/drafts', 'POST', content, authorA.token)).poll;
+      pollIds.push(draft.id);
+      expect({ state: draft.state, version: draft.version, alias: draft.content.authorAlias })
+        .toEqual({ state: 'Draft', version: 1, alias: 'Тестова ініціатива' });
+
+      const editedContent = { ...content, context: content.context + ' Редагування виконано тією самою особою через другого провайдера.' };
+      const edited = z.object({ poll: Poll }).parse(await ok('management', `/v1/polls/${draft.id}`, 'PATCH', editedContent, authorB.token)).poll;
+      expect({ state: edited.state, version: edited.version, context: edited.content.context })
+        .toEqual({ state: 'Draft', version: 2, context: editedContent.context });
+      expect(await call('management', `/v1/polls/${draft.id}`, 'PATCH', editedContent, other.token))
+        .toEqual({ status: 403, value: { error: 'AUTHOR_REQUIRED' } });
+
+      const submitted = z.object({ poll: Poll }).parse(await ok('management', `/v1/polls/${draft.id}/submit`, 'POST', {}, authorA.token)).poll;
+      expect({ state: submitted.state, version: submitted.version }).toEqual({ state: 'Review', version: 2 });
+      expect(await call('management', `/v1/polls/${draft.id}`, 'PATCH', editedContent, authorA.token))
+        .toEqual({ status: 409, value: { error: 'OFFICIAL_CONTENT_IMMUTABLE' } });
+
+      const sessionResponse = await fetch('http://127.0.0.1:4301/internal/introspect', {
+        method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + required(config.identityToken) },
+        body: JSON.stringify({ token: authorA.token }),
+      });
+      const author = Session.parse(await sessionResponse.json()).person;
+      expect(sessionResponse.status).toBe(200);
+      const newerAt = new Date(Date.now() - 30000), olderAt = new Date(Date.now() - 60000);
+      const firstId = randomUUID(), secondId = randomUUID(), thirdId = randomUUID();
+      const catalogueIds: string[] = [firstId, secondId, thirdId];
+      const tieOrder = [firstId, secondId].sort().reverse();
+      const rows = [
+        { id: firstId, createdAt: newerAt, suffix: 'один' },
+        { id: secondId, createdAt: newerAt, suffix: 'два' },
+        { id: thirdId, createdAt: olderAt, suffix: 'три' },
+      ];
+      for (const row of rows) {
+        const rowContent = fixtureContent(new Date(Date.now() + 3600000), `Чи підтримуєте синтетичнокаталоговий приклад номер ${row.suffix}?`);
+        const poll = Poll.parse({ id: row.id, version: 1, state: 'Closed', content: rowContent, createdAt: row.createdAt.toISOString(),
+          cryptoId: randomUUID(), manifestRaw: '{}', review: approvedReview, methodologyStatus: 'Reviewed', contentStatus: 'Visible' });
+        await pool.query('INSERT INTO polls(id,author_person,doc,published_at,created_at) VALUES($1,$2,$3,$4,$5)',
+          [row.id, author, poll, row.createdAt, row.createdAt]);
+        pollIds.push(row.id);
+      }
+
+      const catalogue = z.object({ polls: z.array(Poll), sort: z.string() }).parse(await ok('management', '/v1/polls'));
+      expect(catalogue.sort).toBe('Час створення: новіші спочатку; за однакового часу — ідентифікатор. Без персоналізації.');
+      expect(catalogue.polls.filter(poll => catalogueIds.includes(poll.id)).map(poll => poll.id))
+        .toEqual([...tieOrder, thirdId]);
+      expect(catalogue.polls.some(poll => poll.id === draft.id)).toBe(false);
+
+      const similar = z.object({ polls: z.array(Poll), method: z.string() }).parse(
+        await ok('management', '/v1/similar?q=' + encodeURIComponent('синтетичнокаталоговий')),
+      );
+      expect(similar.method).toBe('PostgreSQL simple full-text conjunction; no automatic merging or deletion');
+      expect(similar.polls.map(poll => poll.id)).toEqual([...tieOrder, thirdId]);
+      expect(new Set(similar.polls.map(poll => poll.id)).size).toBe(3);
+    } finally {
+      if (pollIds.length > 0) {
+        await pool.query('DELETE FROM events WHERE poll_id=ANY($1::uuid[])', [pollIds]);
+        await pool.query('DELETE FROM appeals WHERE poll_id=ANY($1::uuid[])', [pollIds]);
+        await pool.query('DELETE FROM polls WHERE id=ANY($1::uuid[])', [pollIds]);
+      }
+      await pool.end();
+      for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
+    }
+  }, 30000);
+
   it('applies author draft, publication, cooldown and simultaneous-open limits across providers', async () => {
     const authorA = await login('TEST-PERSON-0011', 'A'), authorB = await login('TEST-PERSON-0011', 'B');
     const moderator = await login('TEST-PERSON-0012', 'A'), tokens = [authorA.token, authorB.token, moderator.token];
