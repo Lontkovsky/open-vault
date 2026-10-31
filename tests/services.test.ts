@@ -248,6 +248,52 @@ describe('real service boundaries', () => {
     }
   }, 120000);
 
+  it('rejects injection, CSRF, SSRF, IDOR and participant privilege escalation', async () => {
+    const owner = await login('TEST-PERSON-0006', 'A'), other = await login('TEST-PERSON-0007', 'B');
+    const tokens = [owner.token, other.token];
+    let pollId: string | null = null;
+    try {
+      const content = fixtureContent(new Date(Date.now() + 3600000), 'Чи безпечно <script>alert(1)</script> у синтетичному питанні?');
+      content.argumentsFor[0] = { ...required(content.argumentsFor[0]), text: '<img src=x onerror=alert(1)> лишається текстом.', url: 'https://127.0.0.1:1/private' };
+      const response = await fetch('http://127.0.0.1:4303/v1/drafts', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + owner.token }, body: JSON.stringify(content) });
+      expect(response.status).toBe(200);
+      expect(response.headers.get('content-type')).toContain('application/json');
+      expect(response.headers.get('content-security-policy')).toContain("script-src 'self'");
+      const draft = z.object({ poll: Poll }).parse(await response.json()).poll;
+      pollId = draft.id;
+      expect(draft.content.question).toBe(content.question);
+      expect(draft.content.argumentsFor[0]).toEqual(content.argumentsFor[0]);
+
+      const insecureSource = { ...content, argumentsFor: [{ ...required(content.argumentsFor[0]), url: 'http://127.0.0.1/private' }] };
+      expect(await call('management', '/v1/drafts', 'POST', insecureSource, owner.token)).toEqual({ status: 400, value: { error: 'INVALID_INPUT' } });
+      expect(await call('management', `/v1/polls/${pollId}`, 'GET', undefined, other.token)).toEqual({ status: 404, value: { error: 'POLL_NOT_FOUND' } });
+      expect(await call('management', `/v1/polls/${pollId}`, 'PATCH', content, other.token)).toEqual({ status: 403, value: { error: 'AUTHOR_REQUIRED' } });
+      expect(await call('management', `/v1/polls/${pollId}/review`, 'POST', approvedReview, other.token)).toEqual({ status: 403, value: { error: 'MODERATOR_REQUIRED' } });
+      expect(await call('management', `/v1/polls/${pollId}/incident`, 'POST', {
+        action: 'Cancelled', kind: 'SecurityIncident', reason: 'Синтетична спроба підвищення повноважень звичайного учасника.' }, other.token))
+        .toEqual({ status: 403, value: { error: 'MODERATOR_REQUIRED' } });
+
+      const injection = await call('management', `/v1/polls?q=${encodeURIComponent("' OR 1=1 --")}`);
+      expect(injection.status).toBe(200);
+      expect(z.object({ polls: z.array(Poll) }).parse(injection.value).polls.some(poll => poll.id === pollId)).toBe(false);
+      expect(await call('management', `/v1/polls/${encodeURIComponent("' OR 1=1 --")}`)).toEqual({ status: 400, value: { error: 'INVALID_INPUT' } });
+
+      const crossOrigin = await fetch(`http://127.0.0.1:4303/v1/polls/${pollId}/submit`, { method: 'POST', headers: {
+        'content-type': 'application/json', authorization: 'Bearer ' + owner.token, origin: 'https://attacker.invalid' }, body: '{}' });
+      expect(crossOrigin.status).toBe(403);
+      expect(await crossOrigin.json()).toEqual({ error: 'ORIGIN_REJECTED' });
+    } finally {
+      if (pollId !== null) {
+        const pool = database(await readConfig('management'));
+        await pool.query('DELETE FROM events WHERE poll_id=$1', [pollId]);
+        await pool.query('DELETE FROM appeals WHERE poll_id=$1', [pollId]);
+        await pool.query('DELETE FROM polls WHERE id=$1', [pollId]);
+        await pool.end();
+      }
+      for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
+    }
+  }, 30000);
+
   it('deduplicates A/B, replays late return and exposes outages without weaker admission', async () => {
     const [a, b] = await Promise.all([login('TEST-PERSON-0002', 'A'), login('TEST-PERSON-0002', 'B')]);
     const cfg = await readConfig('identity');

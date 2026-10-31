@@ -1,6 +1,6 @@
 # Покриття початкового стрес-тесту
 
-Machine-readable source: [attack-coverage.json](attack-coverage.json). Defense outcome and evidence state are independent. This is an incomplete implementation checkpoint, not an assertion that all subcases of an attack are covered. No ExternallyReviewed evidence exists.
+Machine-readable source: [attack-coverage.json](attack-coverage.json). Its strict executable contract and the focused injection/XSS/CSRF/SSRF/IDOR/privilege results are documented in [SECURITY_TEST_REPORT.md](SECURITY_TEST_REPORT.md). Defense outcome and evidence state are independent. This is an incomplete implementation checkpoint, not an assertion that all subcases of an attack are covered. No ExternallyReviewed evidence exists.
 
 | ID | Scenario | Defense outcome | Evidence state | Remaining work / risk |
 |---|---|---|---|---|
