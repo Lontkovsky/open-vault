@@ -1,6 +1,7 @@
 import pg from 'pg';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { demandApp, demandCredentialCookie } from '../apps/api/src/demand.ts';
+import type { DemandChatProvider } from '../apps/api/src/demand-chat-provider.ts';
 import { database, readConfig, sha } from '../apps/api/src/common.ts';
 import { DemandPollStatus, DemandResponseReceipt, demandAnswers, demandPollId, demandQuestion } from '../packages/domain/src/demand.ts';
 import { migrateDirectory } from '../scripts/migrate.ts';
@@ -9,6 +10,7 @@ import { parseDemandConfiguration } from '../scripts/demand-start.ts';
 const origin = 'http://localhost:5174';
 let pool: pg.Pool;
 let app: Awaited<ReturnType<typeof demandApp>>;
+const testChatProvider: DemandChatProvider = { async answer() { return 'Підтверджена тестова відповідь.'; } };
 
 function cookiePair(response: { headers: Record<string, string | string[] | number | undefined> }): string {
   const header = response.headers['set-cookie'];
@@ -32,7 +34,7 @@ async function submit(cookie: string, answer: string, requestOrigin = origin) {
 beforeAll(async () => {
   pool = database(await readConfig('management'));
   await migrateDirectory(pool, 'migrations/demand');
-  app = await demandApp(pool, 'test', origin);
+  app = await demandApp(pool, 'test', origin, testChatProvider);
 });
 
 afterEach(async () => {
@@ -62,7 +64,7 @@ describe('minimal demand poll', () => {
 
   it('sets Secure on the production-origin credential', async () => {
     const securePool = database(await readConfig('management'));
-    const secureApp = await demandApp(securePool, 'demo', 'https://openvote.com.ua');
+    const secureApp = await demandApp(securePool, 'demo', 'https://openvote.com.ua', testChatProvider);
     try {
       const response = await secureApp.inject({ method: 'GET', url: '/api/v1/demand-poll' });
       expect(response.statusCode).toBe(200);
@@ -202,7 +204,7 @@ describe('minimal demand poll', () => {
 
   it('does not set a browser credential or claim success when the database is unavailable', async () => {
     const unavailablePool = new pg.Pool({ host: '127.0.0.1', port: 1, user: 'none', database: 'none', password: 'none', connectionTimeoutMillis: 100 });
-    const unavailableApp = await demandApp(unavailablePool, 'test', origin);
+    const unavailableApp = await demandApp(unavailablePool, 'test', origin, testChatProvider);
     try {
       const response = await unavailableApp.inject({ method: 'GET', url: '/api/v1/demand-poll' });
       expect(response.statusCode).toBe(500);
@@ -223,15 +225,16 @@ describe('demand Render configuration', () => {
     OPENVOTE_PUBLIC_ORIGIN: 'https://openvote.com.ua',
     PORT: '10000',
     DEMAND_DATABASE_URL: 'postgresql://openvote_demand:synthetic-password@internal.example:5432/openvote_demand',
+    OPENAI_API_KEY: 'synthetic-openai-key-for-tests-only',
   };
 
   it('accepts only the exact minimal launch configuration', () => {
-    expect(parseDemandConfiguration(valid)).toEqual({ port: 10000, publicOrigin: 'https://openvote.com.ua', databaseUrl: valid.DEMAND_DATABASE_URL });
+    expect(parseDemandConfiguration(valid)).toEqual({ port: 10000, publicOrigin: 'https://openvote.com.ua', databaseUrl: valid.DEMAND_DATABASE_URL, openAiApiKey: valid.OPENAI_API_KEY });
   });
 
   it('accepts the Render internal URL with the default PostgreSQL port', () => {
     const environment = { ...valid, DEMAND_DATABASE_URL: 'postgresql://openvote_demand:synthetic-password@internal.example/openvote_demand' };
-    expect(parseDemandConfiguration(environment)).toEqual({ port: 10000, publicOrigin: 'https://openvote.com.ua', databaseUrl: environment.DEMAND_DATABASE_URL });
+    expect(parseDemandConfiguration(environment)).toEqual({ port: 10000, publicOrigin: 'https://openvote.com.ua', databaseUrl: environment.DEMAND_DATABASE_URL, openAiApiKey: valid.OPENAI_API_KEY });
   });
 
   it.each([
@@ -240,6 +243,8 @@ describe('demand Render configuration', () => {
     { ...valid, PORT: '80' },
     { ...valid, DEMAND_DATABASE_URL: 'postgresql://openvote_demand:password@internal.example:5432/other' },
     { ...valid, DEMAND_DATABASE_URL: 'https://internal.example/openvote_demand' },
+    { ...valid, OPENAI_API_KEY: undefined },
+    { ...valid, OPENAI_API_KEY: 'short' },
   ])('rejects an invalid launch binding', environment => {
     expect(() => parseDemandConfiguration(environment)).toThrow();
   });

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { DemandPollStatus, DemandResponseReceipt } from '../../../packages/domain/src/demand.ts';
-import type { DemandAnswerType, DemandPollStatusType, DemandResponseReceiptType } from '../../../packages/domain/src/demand.ts';
+import { DemandChatResponse, DemandPollStatus, DemandResponseReceipt } from '../../../packages/domain/src/demand.ts';
+import type { DemandAnswerType, DemandChatResponseType, DemandPollStatusType, DemandResponseReceiptType } from '../../../packages/domain/src/demand.ts';
 
 const ApiError = z.strictObject({ error: z.string().regex(/^[A-Z][A-Z0-9_:/-]+$/) });
 
@@ -29,4 +29,13 @@ export async function recordDemandResponse(answer: DemandAnswerType): Promise<De
   });
   if (!response.ok) throw await failure(response);
   return DemandResponseReceipt.parse(await response.json());
+}
+
+export async function askDemandChat(question: string): Promise<DemandChatResponseType> {
+  const response = await fetch('/api/v1/demand-chat', {
+    method: 'POST', credentials: 'same-origin', referrerPolicy: 'no-referrer', signal: AbortSignal.timeout(25000),
+    headers: { 'content-type': 'application/json' }, body: JSON.stringify({ question }),
+  });
+  if (!response.ok) throw await failure(response);
+  return DemandChatResponse.parse(await response.json());
 }

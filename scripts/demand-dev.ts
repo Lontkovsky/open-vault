@@ -1,11 +1,13 @@
 import { spawn } from 'node:child_process';
+import { OpenAiDemandChatProvider } from '../apps/api/src/demand-chat-provider.ts';
 import { demandApp } from '../apps/api/src/demand.ts';
-import { database, readConfig } from '../apps/api/src/common.ts';
+import { database, readConfig, required } from '../apps/api/src/common.ts';
 import { migrateDirectory } from './migrate.ts';
 
 const databasePool = database(await readConfig('management'));
 await migrateDirectory(databasePool, 'migrations/demand');
-const app = await demandApp(databasePool, 'development', 'http://localhost:5174');
+const chatProvider = new OpenAiDemandChatProvider(required(process.env.OPENAI_API_KEY), fetch);
+const app = await demandApp(databasePool, 'development', 'http://localhost:5174', chatProvider);
 await app.listen({ host: '127.0.0.1', port: 4304 });
 const web = spawn('pnpm', ['--filter', '@openvote/web', 'dev:demand'], { stdio: 'inherit' });
 let stopping = false;

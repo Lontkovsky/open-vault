@@ -11,7 +11,7 @@
   "scripts": {
     "bootstrap": "node scripts/bootstrap.mjs",
     "dev": "node scripts/dev.mjs",
-    "dev:demand": "node scripts/demand-dev.ts",
+    "dev:demand": "node --env-file=.env scripts/demand-dev.ts",
     "render:start": "node scripts/render-start.ts",
     "demand:start": "node scripts/demand-start.ts",
     "seed": "node scripts/seed.ts",

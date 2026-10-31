@@ -3,6 +3,8 @@ import type pg from 'pg';
 import { z } from 'zod';
 import {
   DemandAnswer,
+  DemandChatRequest,
+  DemandChatResponse,
   DemandPollResults,
   DemandPollStatus,
   DemandResponseReceipt,
@@ -13,9 +15,17 @@ import {
 } from '../../../packages/domain/src/demand.ts';
 import { application, Failure, sha, token, transaction } from './common.ts';
 import type { ConfigType } from './common.ts';
+import type { DemandChatProvider } from './demand-chat-provider.ts';
 
 export const demandCredentialCookie = 'openvote_demand_credential';
 const DemandCredential = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+export const demandChatLimits = {
+  perCredential: 5,
+  perCredentialWindowMs: 10 * 60 * 1000,
+  global: 100,
+  globalWindowMs: 60 * 60 * 1000,
+  concurrent: 2,
+} as const;
 
 async function demandSnapshot(client: pg.Pool | pg.PoolClient, credentialHash: string) {
   const result = await client.query<{
@@ -57,11 +67,15 @@ export async function demandApp(
   pool: pg.Pool,
   environment: ConfigType['environment'],
   publicOrigin: string,
+  chatProvider: DemandChatProvider,
 ) {
   const app = await application({ environment, role: 'demand' }, publicOrigin);
   await app.register(cookie);
   app.addHook('onClose', () => pool.end());
   const secureCookie = new URL(publicOrigin).protocol === 'https:';
+  const chatRequests = new Map<string, number[]>();
+  let globalChatRequests: number[] = [];
+  let activeChatRequests = 0;
 
   app.get('/api/v1/demand-poll', async (request, reply) => {
     const current = request.cookies[demandCredentialCookie];
@@ -112,6 +126,32 @@ export async function demandApp(
       return demandSnapshot(client, credentialHash);
     });
     return DemandResponseReceipt.parse({ recorded: true, answer: input.answer, results: snapshot.results });
+  });
+
+  app.post('/api/v1/demand-chat', { bodyLimit: 2048 }, async (request) => {
+    if (request.headers.origin !== publicOrigin) throw new Failure('ORIGIN_REJECTED', 403);
+    const input = DemandChatRequest.parse(request.body);
+    const rawCredential = credential(request.cookies[demandCredentialCookie]);
+    const credentialHash = sha(rawCredential);
+    const now = Date.now();
+    globalChatRequests = globalChatRequests.filter(timestamp => now - timestamp < demandChatLimits.globalWindowMs);
+    for (const [hash, timestamps] of chatRequests) {
+      const current = timestamps.filter(timestamp => now - timestamp < demandChatLimits.perCredentialWindowMs);
+      if (current.length === 0) chatRequests.delete(hash);
+      else chatRequests.set(hash, current);
+    }
+    const credentialRequests = chatRequests.get(credentialHash) ?? [];
+    if (credentialRequests.length >= demandChatLimits.perCredential || globalChatRequests.length >= demandChatLimits.global) {
+      throw new Failure('AI_RATE_LIMITED', 429);
+    }
+    if (activeChatRequests >= demandChatLimits.concurrent) throw new Failure('AI_BUSY', 503);
+    credentialRequests.push(now);
+    chatRequests.set(credentialHash, credentialRequests);
+    globalChatRequests.push(now);
+    activeChatRequests += 1;
+    try {
+      return DemandChatResponse.parse({ answer: await chatProvider.answer(input.question) });
+    } finally { activeChatRequests -= 1; }
   });
 
   return app;
