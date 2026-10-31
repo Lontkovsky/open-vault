@@ -18,6 +18,8 @@ Before the focused test was added, one temporary synthetic draft stored a script
 | IDOR read | Authenticated participant requests another author's Draft | Resource is not disclosed | Passed: `404 POLL_NOT_FOUND` | Moderator access is an explicit role capability |
 | IDOR write | Authenticated participant edits another author's Draft | Author check rejects | Passed: `403 AUTHOR_REQUIRED` | Compromised author session remains an account-security risk |
 | Privilege escalation | Participant calls review and incident routes | Moderator check rejects | Passed: both returned `403 MODERATOR_REQUIRED` | Compromised moderator credentials retain moderator powers |
+| Oversized request | JSON body exceeds 1 MiB | Reject before route handling | Passed: `413 INVALID_INPUT` | Gateway/provider limits still require deployment-specific monitoring |
+| Resource burst | More than 8 active plus 16 waiting requests | Bound active work and queue; reject overflow/expired wait | Passed: maximum 8 active; overflow and two-second expiry returned `503 SERVER_BUSY` | Process-local control does not replace upstream DDoS protection |
 
 All fixtures are synthetic. The test removes its draft and sessions and stores no token, credential, tracker, identity or malicious HTML artifact.
 

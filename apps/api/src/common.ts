@@ -1,6 +1,6 @@
 import { createHash, createHmac, createCipheriv, createDecipheriv, randomBytes, sign, verify, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import Fastify, { LogController } from 'fastify';
+import Fastify, { LogController, type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import pg from 'pg';
@@ -9,6 +9,15 @@ import { Envelope, Environment } from '../../../packages/domain/src/index.ts';
 import type { EnvelopeType } from '../../../packages/domain/src/index.ts';
 
 export const Role = z.enum(['identity', 'ballot', 'management', 'provider-A', 'provider-B', 'demand']);
+export const serviceResourceLimits = {
+  requestBodyBytes: 1024 * 1024,
+  activeRequests: 8,
+  queuedRequests: 16,
+  queueWaitMs: 2000,
+  requestTimeoutMs: 100000,
+  connectionTimeoutMs: 100000,
+  parameterLength: 100,
+} as const;
 export const Config = z.strictObject({
   environment: Environment, role: Role, port: z.number().int(), serviceToken: z.string().min(32),
   database: z.strictObject({ host: z.string(), port: z.number().int(), database: z.string(), user: z.string(), password: z.string() }).optional(),
@@ -90,16 +99,81 @@ export async function jsonRequest(url: string, body: unknown, authorization: str
 export async function core(config: ConfigType, request: unknown, ceremony = false): Promise<unknown> {
   return jsonRequest(`http://127.0.0.1:${ceremony ? 4311 : 4310}/run`, request, required(config.coreToken));
 }
+
+function requestGate() {
+  type Waiter = { request: FastifyRequest; resolve: () => void; reject: (error: Error) => void; timer: NodeJS.Timeout };
+  let active = 0;
+  const held = new WeakSet<FastifyRequest>();
+  const queued: Waiter[] = [];
+  const waiting = new WeakMap<FastifyRequest, Waiter>();
+
+  function remove(waiter: Waiter) {
+    const index = queued.indexOf(waiter);
+    if (index >= 0) queued.splice(index, 1);
+    waiting.delete(waiter.request);
+    clearTimeout(waiter.timer);
+  }
+
+  function promote() {
+    const waiter = queued.shift();
+    if (waiter === undefined) return;
+    waiting.delete(waiter.request);
+    clearTimeout(waiter.timer);
+    active += 1;
+    held.add(waiter.request);
+    waiter.resolve();
+  }
+
+  async function acquire(request: FastifyRequest) {
+    if (active < serviceResourceLimits.activeRequests) {
+      active += 1;
+      held.add(request);
+      return;
+    }
+    if (queued.length >= serviceResourceLimits.queuedRequests) throw new Failure('SERVER_BUSY', 503);
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        const waiter = waiting.get(request);
+        if (waiter === undefined) return;
+        remove(waiter);
+        reject(new Failure('SERVER_BUSY', 503));
+      }, serviceResourceLimits.queueWaitMs);
+      const waiter = { request, resolve, reject, timer };
+      waiting.set(request, waiter);
+      queued.push(waiter);
+    });
+  }
+
+  function release(request: FastifyRequest) {
+    const waiter = waiting.get(request);
+    if (waiter !== undefined) {
+      remove(waiter);
+      waiter.reject(new Error('REQUEST_ABORTED'));
+      return;
+    }
+    if (!held.delete(request)) return;
+    active -= 1;
+    promote();
+  }
+
+  return { acquire, release };
+}
+
 export async function application<T extends Pick<ConfigType, 'environment' | 'role'>>(config: T, publicOrigin: string) {
   const origin = parsePublicOrigin(publicOrigin, config.environment);
-  const app = Fastify({ logger: false, bodyLimit: 1024 * 1024, requestTimeout: 100000,
-    connectionTimeout: 100000, routerOptions: { maxParamLength: 100 }, logController: new LogController({ disableRequestLogging: true }) });
+  const gate = requestGate();
+  const app = Fastify({ logger: false, bodyLimit: serviceResourceLimits.requestBodyBytes, requestTimeout: serviceResourceLimits.requestTimeoutMs,
+    connectionTimeout: serviceResourceLimits.connectionTimeoutMs, routerOptions: { maxParamLength: serviceResourceLimits.parameterLength },
+    logController: new LogController({ disableRequestLogging: true }) });
   await app.register(cors, { origin, credentials: false, methods: ['GET', 'POST', 'PATCH', 'DELETE'] });
   await app.register(helmet, { referrerPolicy: { policy: 'no-referrer' } });
   app.addHook('onRequest', async (request, reply) => {
+    reply.raw.once('close', () => gate.release(request));
     reply.header('cache-control', 'no-store');
     if (request.headers.origin !== undefined && request.headers.origin !== origin) throw new Failure('ORIGIN_REJECTED', 403);
+    await gate.acquire(request);
   });
+  app.addHook('onResponse', async request => { gate.release(request); });
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof Failure) return reply.code(error.statusCode).send({ error: error.message });
     if (error instanceof z.ZodError) return reply.code(400).send({ error: 'INVALID_INPUT' });

@@ -324,17 +324,18 @@
     {
       "id": "A10",
       "title": "Недоступність провайдера ідентифікації",
-      "attackerCapabilities": "A/B failure, delayed callbacks and conflicting claims",
+      "attackerCapabilities": "A/B failure, delayed callbacks, conflicting claims and request bursts",
       "trustBoundary": "A and B have distinct mock keys/processes; real upstream unknown",
-      "controls": "Idempotent return; same person/credential through B; conflict revokes session; production mocks refused",
-      "residualRisk": "Production adapters AwaitingProviderContract; real upstream independence and production attribute contracts unverified",
+      "controls": "Idempotent return; same person/credential through B; conflict revokes session; production mocks refused; eight active requests, sixteen FIFO waiters and two-second queue expiry per service process",
+      "residualRisk": "Production adapters AwaitingProviderContract; real upstream independence, upstream DDoS protection and production attribute contracts unverified",
       "requirements": [
         "15.1",
         "15.9"
       ],
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/17",
-        "https://github.com/Lontkovsky/openvote/issues/18"
+        "https://github.com/Lontkovsky/openvote/issues/18",
+        "https://github.com/Lontkovsky/openvote/issues/34"
       ],
       "prs": [
         "https://github.com/Lontkovsky/openvote/pull/43",
@@ -346,14 +347,18 @@
       "verification": [
         "tests/services.test.ts",
         "tests/providers.test.ts",
-        "tests/e2e/inapp.mjs"
+        "tests/e2e/inapp.mjs",
+        "tests/transport.test.ts",
+        "scripts/load-test.ts"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
         "artifacts/e2e/report.json",
-        "docs/IDENTITY_PROVIDERS.md"
+        "docs/IDENTITY_PROVIDERS.md",
+        "docs/LOAD_TEST.md",
+        "artifacts/load/report.json"
       ],
-      "remainingAcceptanceCriteria": "Production adapters AwaitingProviderContract; real upstream independence and fresh-attribute contracts require external access. Full revocation remains in V009."
+      "remainingAcceptanceCriteria": "Production adapters AwaitingProviderContract; real upstream independence, upstream DDoS protection and fresh-attribute contracts require external access. The local read profile is not production capacity evidence. Full revocation remains in V009."
     },
     {
       "id": "A11",

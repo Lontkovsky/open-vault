@@ -44,6 +44,8 @@ To inspect the separate demand landing locally while the full platform remains a
 
 The integration tests use live local services and native cryptography. They remove only the poll fixtures they created. Interactive browser checks reuse the existing in-app Browser and are separate from the CLI tests. Follow [the E2E procedure](docs/BROWSER_TESTING.md) to run `pnpm test:e2e` with the existing tab binding. Current final-source run `dadf885395` passed all 14 stages / 38 assertions, including real JSON/CSV/SVG/audit downloads and separate native verification of the downloaded archive. [Browser evidence status](artifacts/e2e/README.md) records the exact source digest and bounded result. Complete offline-ballot/error coverage and final release instructions remain open.
 
+[Resource limits and the measured local load profile](docs/LOAD_TEST.md) document exact request-body, active-work, queue and timeout bounds plus the actual hardware, two-poll dataset and 1,000-request result. The local read result is not a national-scale or production-capacity claim.
+
 <a id="verification"></a>
 
 Verify the archive downloaded by the browser without identity storage:
