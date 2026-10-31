@@ -2,15 +2,15 @@
 
 Незалежна відкрита платформа добровільних голосувань із підтвердженням права участі та можливістю незалежно перевірити результати.
 
-**Development work in progress. This repository is not a completed release.** Only explicitly synthetic identities and test ballots are in scope. It is not a state service, official election, binding referendum or representative survey. Real politically sensitive participation is not enabled.
+**The tracked synthetic development scope is implemented and reconciled; Production Readiness remains open.** Only explicitly synthetic identities and test ballots are in scope. It is not a state service, official election, binding referendum or representative survey. Real politically sensitive participation is not enabled.
 
 Requirements: [product and engineering contract](docs/REQUIREMENTS.md), [mandatory adversarial controls](docs/REQUIREMENTS-A15.md).
 
 Implementation and verification status: [progress](docs/PROGRESS.md). Architecture choices: [decisions](docs/DECISIONS.md).
 
-The first implemented slice runs **unmodified Belenios 3.3.0 cryptography** with five synthetic participants, a 2-of-3 threshold **plus a mandatory trustee**, final-vote enforcement and offline public verification. The web application is still under development. The fixed roster does not support adding a genuinely new person after opening; see [protocol compatibility](docs/adr/0001-reference-core.md).
+The implemented synthetic slice runs **unmodified Belenios 3.3.0 cryptography** with five synthetic participants, a 2-of-3 threshold **plus a mandatory trustee**, final-vote enforcement and offline public verification. The fixed roster does not support adding a genuinely new person after opening; see [protocol compatibility](docs/adr/0001-reference-core.md).
 
-The application slice now includes synthetic identity providers A/B, separate PostgreSQL stores, client encryption, final ballot acceptance, trustee finality checks, public results and a Ukrainian React interface. It is still **incomplete development work**, with remaining acceptance criteria recorded in [progress](docs/PROGRESS.md).
+The application slice includes synthetic identity providers A/B, separate PostgreSQL stores, client encryption, final ballot acceptance, trustee finality checks, public results and a Ukrainian React interface. Completion of that development scope does not authorize real use: the provider, legal, independent-review, trustee and hosted-cutover prerequisites remain explicitly blocked by the [launch readiness gate](docs/LAUNCH_READINESS.md).
 
 ## Minimal demand-validation launch
 
@@ -42,13 +42,13 @@ Open [the local application](http://localhost:5173). `seed` creates one immutabl
 
 To inspect the separate demand landing locally while the full platform remains available, run `pnpm dev:demand` and open [http://localhost:5174](http://localhost:5174). It reuses the local management PostgreSQL instance only as a development database; the Render Blueprint provisions one dedicated `openvote_demand` database.
 
-The integration tests use live local services and native cryptography. They remove only the poll fixtures they created. Interactive browser checks reuse the existing in-app Browser and are separate from the CLI tests. Follow [the E2E procedure](docs/BROWSER_TESTING.md) to run `pnpm test:e2e` with the existing tab binding. Current final-source run `6c9fa7afdf` passed all 14 stages / 38 assertions, including real JSON/CSV/SVG/audit downloads and separate native verification of the downloaded archive. [Browser evidence status](artifacts/e2e/README.md) records the exact source digest and bounded result. Exact-head PR/CI, public candidate publication, hosted verification and external Production Readiness remain open.
+The integration tests use live local services and native cryptography. They remove only the poll fixtures they created. Interactive browser checks reuse the existing in-app Browser and are separate from the CLI tests. Follow [the E2E procedure](docs/BROWSER_TESTING.md) to run `pnpm test:e2e` with the existing tab binding. Retained exact-source run `6c9fa7afdf` passed all 14 stages / 38 assertions, including real JSON/CSV/SVG/audit downloads and separate native verification of the downloaded archive. [Browser evidence status](artifacts/e2e/README.md) records that source digest and bounded result. Implementation PR [#69](https://github.com/Lontkovsky/openvote/pull/69) and reconciliation PR [#71](https://github.com/Lontkovsky/openvote/pull/71) are merged with successful required CI. The single final full-platform Browser run remains intentionally deferred to the exact production candidate; public candidate publication, hosted full-platform verification and external Production Readiness remain open.
 
 [Resource limits and the measured local load profile](docs/LOAD_TEST.md) document exact request-body, active-work, queue and timeout bounds plus the actual hardware, two-poll dataset and 1,000-request result. The local read result is not a national-scale or production-capacity claim.
 
 [Reproducible client releases](docs/REPRODUCIBLE_RELEASE.md) define the two clean client builds, complete byte manifests, checksums, CycloneDX SBOM, source/toolchain provenance and the separately trusted monitor that detects substituted server JavaScript. The self-generated evidence is not an independent signature and does not prove identical delivery to every user.
 
-[Development release procedure](docs/RELEASE.md) is the single candidate checklist. It records the exact clean-checkout, command, retained-Browser, public-evidence and GitHub prerelease gates, while keeping provider contracts, legal approval, independent review and independent trustees visibly open as Production Readiness work. No public release exists yet.
+[Development release procedure](docs/RELEASE.md) is the single candidate checklist. It records the exact clean-checkout, command, retained-Browser, public-evidence and GitHub prerelease gates. The separate [launch readiness gate](docs/LAUNCH_READINESS.md) keeps provider contracts, legal approval, independent review, independent trustees and the hosted cutover visibly blocked. No public release exists yet.
 
 <a id="verification"></a>
 
