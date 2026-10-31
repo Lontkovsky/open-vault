@@ -132,8 +132,10 @@ describe('real service boundaries', () => {
       expect(await call('management', '/v1/drafts', 'POST', pastDeadline, author.token))
         .toEqual({ status: 400, value: { error: 'DEADLINE_IN_PAST' } });
 
-      const catalogue = z.object({ polls: z.array(Poll) }).parse(await ok('management', '/v1/polls'));
-      const predecessor = required(catalogue.polls[0]);
+      const predecessorContent = { ...base, authorAlias: 'Браузерний тест',
+        question: 'Чи має синтетичне попереднє голосування залишитися пов’язаним із наступником?' };
+      const predecessor = z.object({ poll: Poll }).parse(await ok('management', '/v1/drafts', 'POST', predecessorContent, author.token)).poll;
+      pollIds.push(predecessor.id);
       const content = { ...base, authorAlias: 'Браузерний тест', relatedPolls: [predecessor.id] };
       const draft = z.object({ poll: Poll }).parse(await ok('management', '/v1/drafts', 'POST', content, author.token)).poll;
       pollIds.push(draft.id);
