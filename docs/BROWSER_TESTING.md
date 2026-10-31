@@ -27,7 +27,7 @@ Execute each stage with `await suite.step(name)` in this order:
 
 ## Verification checklist
 
-| Case | Prerequisite | Expected result | Baseline run `92387c0df2` | Verified run `dadf885395` |
+| Case | Prerequisite | Expected result | Baseline run `92387c0df2` | Verified run `6c9fa7afdf` |
 |---|---|---|---|---|
 | Create | Healthy local services and synthetic providers | Structured versioned draft enters Review | Passed | Passed |
 | Review start | Moderator synthetic identity | Complete rubric and reason are submitted | Passed | Passed |
@@ -44,7 +44,9 @@ Execute each stage with `await suite.step(name)` in this order:
 | Provider switch | A unavailable and B explicitly selected | The same person receives no second right | Not run after export failure | Passed |
 | Both unavailable | A and B controlled unavailable | Participation remains unavailable and both statuses recover after reset | Not run after export failure | Passed |
 
-Deployment-source run `6f9cb9f991` completed the same 14 stages and 38 assertions in the retained in-app Browser session. Its initial and final source digests both equal `fd7cf14702dde22addaafd900229219984a685b6c4863a292ed487a41fa98671`; the downloaded archive separately passed the native Belenios 3.3.0 verifier with three ballots and exact `[[1,1,1]]`.
+Final integrated run `6c9fa7afdf` completed all 14 stages and 38 assertions in the retained in-app Browser session. Its initial and final source digests both equal `43c4f1e7fd2ea551720094af60d0012ea176df7b8d064517ffa7883323d0f782`; the downloaded archive separately passed the native Belenios 3.3.0 verifier with three ballots and exact `[[1,1,1]]`. The Browser console contained no warning or error. At 390×844 the catalogue and published poll had `scrollWidth === innerWidth === 390`, and the catalogue's primary create action remained visible; the temporary viewport override was reset.
+
+Run `7df6bc507c` first exposed a real completion-state race: the success notice rendered before the approved item disappeared from the moderation queue. The API had completed and a later DOM snapshot showed the item absent. `ReviewQueue` now removes the successful poll or appeal from its local collection before rendering success. Runs `7d1e625ff9` and `91d4c13321` were interrupted by the Browser automation runtime while the application stages observed so far were passing; neither is treated as completed evidence.
 
 Asynchronous review/tally start and completion are separate stages. Wait for real completion; do not change the fixed deadline or insert fabricated outcomes. Every browser action uses the supplied tab.playwright API. Public UI state is inspected after actions; no browser secrets or hidden application state are read. The native cryptographic tract is exercised, not mocked.
 

@@ -13,11 +13,11 @@ The candidate is not approved for real politically sensitive participation. Prod
 | Case | Prerequisite | Expected result | Current evidence |
 |---|---|---|---|
 | Clean checkout | Recursive clone, Node 24.20.0, pnpm 10.33.0, Docker and Python 3 | Locked install, bootstrap and migrations complete without private material in Git | Implemented; final clean-checkout repetition pending |
-| Documented commands | Local synthetic services and the exact inputs documented below | `bootstrap`, `dev`, `seed`, `test`, `test:e2e`, `verify`, `audit:export` and `smoke` follow their documented contracts | Prior focused evidence exists; one final integrated run pending |
-| Full browser journey | Existing retained in-app Browser and healthy local services | Create, review, three choices, duplicate rejection, close, tally, exports and provider failure/recovery all pass | One final integrated run pending by owner instruction |
-| Negative and adversarial cases | Synthetic fixtures only | Declared rejections and detections in A01–A11 retain evidence | Focused suites implemented; exact-head CI pending |
+| Documented commands | Local synthetic services and the exact inputs documented below | `bootstrap`, `dev`, `seed`, `test`, `test:e2e`, `verify`, `audit:export` and `smoke` follow their documented contracts | Passed locally: 103/103 tests, 27/27 native checks, Browser 14/14 stages and 38/38 assertions, native archive verification and current-poll audit export; exact-head CI pending |
+| Full browser journey | Existing retained in-app Browser and healthy local services | Create, review, three choices, duplicate rejection, close, tally, exports and provider failure/recovery all pass | Passed in run `6c9fa7afdf` with identical initial/final source hash |
+| Negative and adversarial cases | Synthetic fixtures only | Declared rejections and detections in A01–A11 retain evidence | Complete local suite passed 103/103; exact-head CI pending |
 | Reproducible clients | Clean committed source and pinned crypto image | Two fresh full and demand builds are byte-identical; manifests, checksums, SBOM and provenance are generated | Passed locally on commit `591e51e56a57777d32bd6758f6cb4fadcadf9dc9`; exact-head CI pending |
-| Public evidence hygiene | Candidate source and generated public artifacts | No known credential/private-key pattern, private trustee material or real identity is published | Focused scan passed; final scan pending |
+| Public evidence hygiene | Candidate source and generated public artifacts | No known credential/private-key pattern, private trustee material or real identity is published | Pre-evidence scan passed; final post-evidence scan pending |
 | Public RC | All implementable rows above passed on the exact PR head and required CI is green | One GitHub prerelease points to the merged exact commit and links the remaining open Production Readiness work | Not published |
 
 No row becomes complete from documentation alone. The issue, board and final report must link the actual run, exact commit, PR and CI result.

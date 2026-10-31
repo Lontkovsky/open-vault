@@ -1,12 +1,12 @@
 {
-  "runId": "7df6bc507c",
-  "sourceHash": "3522309631289628e41b2e338271153078ea1cdc3708811af09c1067386c5588",
-  "finalSourceHash": "3522309631289628e41b2e338271153078ea1cdc3708811af09c1067386c5588",
+  "runId": "6c9fa7afdf",
+  "sourceHash": "43c4f1e7fd2ea551720094af60d0012ea176df7b8d064517ffa7883323d0f782",
+  "finalSourceHash": "43c4f1e7fd2ea551720094af60d0012ea176df7b8d064517ffa7883323d0f782",
   "browser": "Existing in-app Browser; supplied tab.playwright binding",
   "standaloneBrowserStarted": false,
-  "startedAt": "2026-10-31T11:26:05.893Z",
-  "finishedAt": "2026-10-31T11:26:44.505Z",
-  "passed": false,
+  "startedAt": "2026-10-31T11:30:06.665Z",
+  "finishedAt": "2026-10-31T11:36:50.034Z",
+  "passed": true,
   "results": [
     {
       "step": "create",
@@ -27,11 +27,108 @@
     },
     {
       "step": "review",
-      "status": "Failed",
+      "status": "Passed",
       "assertions": [
-        "Stage did not complete"
-      ],
-      "error": "REVIEWED_POLL_STILL_QUEUED"
+        "Moderator applies five-point rubric and reason",
+        "Real ceremony opens immutable poll",
+        "Draft editing is absent after review"
+      ]
+    },
+    {
+      "step": "voteOne",
+      "status": "Passed",
+      "assertions": [
+        "Explicit final confirmation required",
+        "Original browser cryptography produces accepted ballot",
+        "Signed receipt and inclusion checked"
+      ]
+    },
+    {
+      "step": "voteTwo",
+      "status": "Passed",
+      "assertions": [
+        "Second synthetic person casts encrypted opposing vote through B"
+      ]
+    },
+    {
+      "step": "voteThree",
+      "status": "Passed",
+      "assertions": [
+        "Abstention is accepted as the third choice"
+      ]
+    },
+    {
+      "step": "duplicate",
+      "status": "Passed",
+      "assertions": [
+        "Same person through another provider cannot change final vote"
+      ]
+    },
+    {
+      "step": "tallyStart",
+      "status": "Passed",
+      "assertions": [
+        "Operator closes at the fixed deadline and requests threshold tally"
+      ]
+    },
+    {
+      "step": "publish",
+      "status": "Passed",
+      "assertions": [
+        "Fixed close enforced without deadline extension",
+        "Separate test trustees tally the browser ciphertexts",
+        "Published exact 1/1/1 counts and N=3 include abstention"
+      ]
+    },
+    {
+      "step": "exports",
+      "status": "Passed",
+      "assertions": [
+        "Trust center discloses the independent observer and the split-view comparison condition",
+        "Participation policy explains that the minimum group threshold does not hide an unanimous choice",
+        "Anonymous public results and real JSON, CSV, SVG and audit downloads share the exact contract",
+        "CSV independently round-trips all fields and types",
+        "Keyboard opens and closes the rendered share card",
+        "Share card retains exact question, N and all answer counts",
+        "Native archive extracted unchanged from the downloaded audit for offline verification",
+        "Tracker still included after publication",
+        "Self-selection and representativeness warning stays visible"
+      ]
+    },
+    {
+      "step": "providerContracts",
+      "status": "Passed",
+      "assertions": [
+        "Both mock availability states are visible",
+        "Three production boundaries are explicitly awaiting contracts and cannot be selected",
+        "Capability disclosures and provider selection work with the keyboard"
+      ]
+    },
+    {
+      "step": "providerRetry",
+      "status": "Passed",
+      "assertions": [
+        "Outage after status observation shows an explicit error",
+        "Failed return is retried with the same backend attempt",
+        "Restored provider completes that attempt without an automatic switch"
+      ]
+    },
+    {
+      "step": "providerSwitch",
+      "status": "Passed",
+      "assertions": [
+        "Exactly three manual deliveries exhaust the retry limit without new attempts",
+        "An explicit switch to available B confirms the same synthetic person"
+      ]
+    },
+    {
+      "step": "providerBothUnavailable",
+      "status": "Passed",
+      "assertions": [
+        "Both outages visibly stop admission without weaker identity input",
+        "Explicit status refresh restores available participation",
+        "Published poll and fixed result remain available through the outage"
+      ]
     }
   ]
 }
