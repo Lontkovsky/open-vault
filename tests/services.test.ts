@@ -414,16 +414,30 @@ describe('real service boundaries', () => {
     const right = z.object({ credential: z.string(), manifestHash: z.string() });
     const credential = right.parse(await ok('identity', `/v1/credentials/${id}`, 'POST', {}, author.token));
     const otherDevice = await login('TEST-PERSON-0002', 'B');
-    expect(right.parse(await ok('identity', `/v1/credentials/${id}`, 'POST', {}, otherDevice.token))).toEqual(credential);
+    const otherDeviceCredential = right.parse(await ok('identity', `/v1/credentials/${id}`, 'POST', {}, otherDevice.token));
+    expect(otherDeviceCredential).toEqual(credential);
     await control('A', false);
     expect(right.parse(await ok('identity', `/v1/credentials/${id}`, 'POST', {}, author.token))).toEqual(credential);
     await control('A', true);
     const ballot = await generateBallot(record.archive, credential.credential, 0);
     expect((await call('ballot', `/v1/elections/${id}/ballots`, 'POST', { ballot }, author.token)).status).toBe(400);
     expect((await call('ballot', `/v1/elections/${id}/ballots`, 'POST', { ballot, choice: 0 })).status).toBe(400);
-    const responses = await Promise.all(Array.from({ length: 5 }, () => ok('ballot', `/v1/elections/${id}/ballots`, 'POST', { ballot })));
+    const malformedProof = z.looseObject({ answers: z.array(z.looseObject({
+      individual_proofs: z.array(z.array(z.looseObject({ response: z.string() }))),
+    })) }).parse(JSON.parse(ballot));
+    const damagedResponse = required(required(required(malformedProof.answers[0]).individual_proofs[0])[0]);
+    damagedResponse.response = damagedResponse.response === '0' ? '1' : '0';
+    expect(await call('ballot', `/v1/elections/${id}/ballots`, 'POST', { ballot: JSON.stringify(malformedProof) }))
+      .toEqual({ status: 422, value: { error: 'REFERENCE_REJECTED' } });
+    const otherDeviceBallot = await generateBallot(record.archive, otherDeviceCredential.credential, 0);
+    expect(otherDeviceBallot).not.toBe(ballot);
+    const raced = await Promise.all([ballot, otherDeviceBallot].map(value => call('ballot', `/v1/elections/${id}/ballots`, 'POST', { ballot: value })));
+    expect(raced.map(response => response.status).sort()).toEqual([200, 422]);
+    expect(required(raced.find(response => response.status === 422)).value).toEqual({ error: 'FINAL_VOTE_ALREADY_CAST' });
+    const acceptedBallot = required([ballot, otherDeviceBallot][raced.findIndex(response => response.status === 200)]);
+    const responses = await Promise.all(Array.from({ length: 5 }, () => ok('ballot', `/v1/elections/${id}/ballots`, 'POST', { ballot: acceptedBallot })));
     const accepted = z.object({ receipt: Envelope, idempotent: z.boolean() });
-    expect(responses.map(r => accepted.parse(r)).filter(r => !r.idempotent)).toHaveLength(1);
+    expect(responses.map(r => accepted.parse(r)).every(r => r.idempotent)).toBe(true);
     const receipt = accepted.parse(responses[0]).receipt;
     const tracker = Receipt.parse(JSON.parse(receipt.payload)).tracker;
     expect(JSON.stringify(receipt)).not.toMatch(/TEST-PERSON|choice|credential|timestamp/);

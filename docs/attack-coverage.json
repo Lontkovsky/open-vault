@@ -24,7 +24,8 @@
       "prs": [
         "https://github.com/Lontkovsky/openvote/pull/42",
         "https://github.com/Lontkovsky/openvote/pull/49",
-        "https://github.com/Lontkovsky/openvote/pull/50"
+        "https://github.com/Lontkovsky/openvote/pull/50",
+        "https://github.com/Lontkovsky/openvote/pull/69"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -38,6 +39,7 @@
       "actualEvidence": [
         "artifacts/services/tests.json",
         "docs/RECOVERY.md",
+        "The ballot API rejected a corrupted zero-knowledge proof, accepted exactly one of two distinct concurrent ciphertexts for the same cross-provider right, and returned idempotent receipts for five exact redeliveries",
         "The stale synthetic ballot database accepted the same encrypted ballot as non-idempotent; recovery verification with the retained receipt then rejected that restored state before any retry"
       ],
       "remainingAcceptanceCriteria": "Local stale-restore detection is implemented. Automatic host enforcement, complete retained-evidence custody and an actual hosted backup/restore exercise remain pending"
