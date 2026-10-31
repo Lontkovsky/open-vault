@@ -202,7 +202,7 @@
       "title": "Маніпуляція формулюванням і контекстом",
       "attackerCapabilities": "Author/moderator changes official content or manipulates language",
       "trustBoundary": "Honest review and client receiving expected code",
-      "controls": "Five-point rubric, reasoned duplicate decisions with an appeal journal, fixed official manifest/context and client comparison; the demand assistant uses the shared FAQ as its only approved context, disables tools and web access, and has strict prompt-boundary and request-limit tests",
+      "controls": "Five-point rubric, reasoned duplicate decisions with an appeal journal, fixed official manifest/context across management and ballot APIs, retained predecessor links and client comparison; the demand assistant uses the shared FAQ as its only approved context, disables tools and web access, and has strict prompt-boundary and request-limit tests",
       "residualRisk": "External model behavior, the broader malicious language suite and source/content removal policy tests remain pending",
       "requirements": [
         "15.1",
@@ -215,7 +215,8 @@
         "https://github.com/Lontkovsky/openvote/issues/65"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/openvote/pull/49"
+        "https://github.com/Lontkovsky/openvote/pull/49",
+        "https://github.com/Lontkovsky/openvote/pull/69"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -229,7 +230,8 @@
         "artifacts/services/tests.json",
         "artifacts/reference/reference-report.json",
         "docs/PROGRESS.md",
-        "The actual management API rejects participant review and appeal resolution, requires every rubric item before approval, records the duplicate reason, permits an author appeal and records the moderator resolution before reopening the draft"
+        "The actual management API rejects participant review and appeal resolution, requires every rubric item before approval, records the duplicate reason, permits an author appeal and records the moderator resolution before reopening the draft",
+        "The focused lifecycle scenario rejects invalid deadlines and post-open edits, compares management, embedded and served official context, requires a structured cancellation reason and retains the predecessor link"
       ],
       "remainingAcceptanceCriteria": "External model behavior, the broader malicious language suite and source/content removal policy tests remain pending"
     },

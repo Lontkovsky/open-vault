@@ -16,6 +16,7 @@ import { identityApp } from '../apps/api/src/identity.ts';
 import { CoreReport } from '../packages/domain/src/checkpoints.ts';
 import { ObserverConfig } from '../packages/domain/src/observer.ts';
 import { observePublic } from '../scripts/observer-client.ts';
+import { cleanupBrowserFixtures } from './support/cleanup.ts';
 
 const created: { id: string; cryptoId: string }[] = [];
 async function control(provider: 'A' | 'B', available: boolean, conflictingAttributes = false, delayMs = 0) {
@@ -115,6 +116,66 @@ describe('real service boundaries', () => {
         await pool.query('DELETE FROM polls WHERE id=ANY($1::uuid[])', [pollIds]);
       }
       await pool.end();
+      for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
+    }
+  }, 30000);
+
+  it('enforces reviewed lifecycle, deadlines, immutable official context and successor links', async () => {
+    const author = await login('TEST-PERSON-0001', 'A'), moderator = await login('TEST-PERSON-0012', 'A');
+    const tokens = [author.token, moderator.token], pollIds: string[] = [];
+    try {
+      const base = fixtureContent(new Date(Date.now() + 600000), 'Чи зберігає нове синтетичне питання посилання на попереднє?');
+      const invalidSchedule = { ...base, opensAt: new Date(Date.now() + 1200000).toISOString() };
+      expect(await call('management', '/v1/drafts', 'POST', invalidSchedule, author.token))
+        .toEqual({ status: 400, value: { error: 'INVALID_SCHEDULE' } });
+      const pastDeadline = { ...base, opensAt: new Date(Date.now() - 7200000).toISOString(), closesAt: new Date(Date.now() - 3600000).toISOString() };
+      expect(await call('management', '/v1/drafts', 'POST', pastDeadline, author.token))
+        .toEqual({ status: 400, value: { error: 'DEADLINE_IN_PAST' } });
+
+      const catalogue = z.object({ polls: z.array(Poll) }).parse(await ok('management', '/v1/polls'));
+      const predecessor = required(catalogue.polls[0]);
+      const content = { ...base, authorAlias: 'Браузерний тест', relatedPolls: [predecessor.id] };
+      const draft = z.object({ poll: Poll }).parse(await ok('management', '/v1/drafts', 'POST', content, author.token)).poll;
+      pollIds.push(draft.id);
+      expect({ state: draft.state, links: draft.content.relatedPolls }).toEqual({ state: 'Draft', links: [predecessor.id] });
+      const review = z.object({ poll: Poll }).parse(await ok('management', `/v1/polls/${draft.id}/submit`, 'POST', {}, author.token)).poll;
+      expect(review.state).toBe('Review');
+      expect(await call('management', `/v1/polls/${draft.id}/submit`, 'POST', {}, author.token))
+        .toEqual({ status: 409, value: { error: 'INVALID_TRANSITION' } });
+
+      const opened = z.object({ poll: Poll }).parse(await ok('management', `/v1/polls/${draft.id}/review`, 'POST', approvedReview, moderator.token)).poll;
+      expect(opened.state).toBe('Open');
+      if (opened.cryptoId === null || opened.manifestRaw === null) throw new Error('PUBLISHED_MANIFEST_MISSING');
+      const embedded = Manifest.parse(JSON.parse(z.object({ description: z.string() }).parse(JSON.parse(opened.manifestRaw)).description));
+      const servedRaw = z.object({ electionRaw: z.string() }).parse(await ok('ballot', `/v1/elections/${opened.cryptoId}/manifest`)).electionRaw;
+      const served = Manifest.parse(JSON.parse(z.object({ description: z.string() }).parse(JSON.parse(servedRaw)).description));
+      const publicPoll = z.object({ poll: Poll, events: z.array(z.unknown()) }).parse(await ok('management', `/v1/polls/${opened.id}`)).poll;
+      for (const official of [opened.content, publicPoll.content, embedded, served]) {
+        expect({ question: official.question, context: official.context, closesAt: official.closesAt, relatedPolls: official.relatedPolls })
+          .toEqual({ question: content.question, context: content.context, closesAt: content.closesAt, relatedPolls: [predecessor.id] });
+      }
+      expect(await call('management', `/v1/polls/${opened.id}`, 'PATCH', { ...content, context: content.context + ' Прихована зміна.' }, author.token))
+        .toEqual({ status: 409, value: { error: 'OFFICIAL_CONTENT_IMMUTABLE' } });
+      expect(await call('management', `/v1/polls/${opened.id}/close`, 'POST', {}, moderator.token))
+        .toEqual({ status: 409, value: { error: 'DEADLINE_NOT_REACHED' } });
+      expect(await call('management', `/v1/polls/${opened.id}/demo-tally`, 'POST', {}, moderator.token))
+        .toEqual({ status: 409, value: { error: 'INVALID_TRANSITION' } });
+      const prematureInvalidation = { action: 'Invalidated', kind: 'InvalidProof', reason: 'Синтетична передчасна спроба визнати неопублікований результат недійсним.' };
+      expect(await call('management', `/v1/polls/${opened.id}/incident`, 'POST', prematureInvalidation, moderator.token))
+        .toEqual({ status: 409, value: { error: 'INVALID_TRANSITION' } });
+      expect(await call('management', `/v1/polls/${opened.id}/incident`, 'POST', {
+        action: 'Cancelled', kind: 'SecurityIncident', reason: 'Недостатньо.' }, moderator.token))
+        .toEqual({ status: 400, value: { error: 'INVALID_INPUT' } });
+
+      const cancellation = { action: 'Cancelled', kind: 'SecurityIncident',
+        reason: 'Синтетичний інцидент життєвого циклу з явною причиною, не пов’язаною з результатом.' };
+      const cancelled = z.object({ poll: Poll }).parse(await ok('management', `/v1/polls/${opened.id}/incident`, 'POST', cancellation, moderator.token)).poll;
+      expect({ state: cancelled.state, links: cancelled.content.relatedPolls }).toEqual({ state: 'Cancelled', links: [predecessor.id] });
+      const journal = z.object({ poll: Poll, events: z.array(z.object({ kind: z.string(), reason: z.string() })) })
+        .parse(await ok('management', `/v1/polls/${opened.id}`));
+      expect(journal.events.at(-1)).toEqual({ kind: 'SecurityIncident', reason: cancellation.reason });
+    } finally {
+      if (pollIds.length > 0) await cleanupBrowserFixtures(pollIds);
       for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
     }
   }, 30000);
