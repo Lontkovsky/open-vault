@@ -63,7 +63,8 @@
       ],
       "prs": [
         "https://github.com/Lontkovsky/openvote/pull/42",
-        "https://github.com/Lontkovsky/openvote/pull/49"
+        "https://github.com/Lontkovsky/openvote/pull/49",
+        "https://github.com/Lontkovsky/openvote/pull/69"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -75,7 +76,8 @@
       ],
       "actualEvidence": [
         "artifacts/reference/reference-report.json",
-        "artifacts/services/tests.json"
+        "artifacts/services/tests.json",
+        "The current API/native fixture accepted only the committed credential set, returned the same recovery credential, and rejected foreign admission plus roster, manifest, environment and trustee-key replacement"
       ],
       "remainingAcceptanceCriteria": "Replacing the trusted roster admits an issuer-created credential without proving a person exists; independently trusted roster provenance and complete role/collusion evidence remain open"
     },
