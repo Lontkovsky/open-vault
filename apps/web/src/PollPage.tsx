@@ -68,7 +68,7 @@ function Vote({ poll, auth }: { poll: PollType; auth: Auth }) {
     try {
       const info = ElectionInfo.parse(await request('ballot', `/v1/elections/${poll.cryptoId}/manifest`));
       const manifest = Manifest.parse(JSON.parse(z.object({ description: z.string() }).parse(JSON.parse(info.electionRaw)).description));
-      if (info.electionRaw !== poll.manifestRaw || await hash(info.electionRaw) !== info.manifestHash || !Object.entries(poll.content).every(([key, value]) => JSON.stringify(value) === JSON.stringify(Reflect.get(manifest, key)))) throw new Error('Видимий текст не відповідає manifest. Голосування заблоковано.');
+      if (info.electionRaw !== poll.manifestRaw || await hash(info.electionRaw) !== info.manifestHash || !Object.entries(poll.content).every(([key, value]) => JSON.stringify(value) === JSON.stringify(Reflect.get(manifest, key)))) throw new Error('Текст питання не збігається із зафіксованою версією. Голосування заблоковано.');
       let encrypted = pending;
       if (encrypted === null) {
         const right = z.object({ credential: z.string(), manifestHash: z.string() }).parse(await request('identity', `/v1/credentials/${poll.cryptoId}`, 'POST', {}, auth.token));
@@ -93,7 +93,7 @@ function Vote({ poll, auth }: { poll: PollType; auth: Auth }) {
     <ErrorMessage message={error} />{error !== null && pending !== null && <p>Підтвердження приймання не отримано. Стан доставки невідомий; повтор надсилає той самий зашифрований бюлетень. Не закривайте сторінку.</p>}
     <button className="primary" disabled={!confirmed || busy || attempts >= 3} onClick={() => void submit()}>{busy ? 'Шифрування та надсилання…' : pending === null ? 'Зашифрувати й остаточно надіслати' : `Повторити той самий запит (${attempts}/3)`}</button>
     {attempts >= 3 && <p>Ліміт трьох спроб вичерпано. Перевірте tracker зашифрованого бюлетеня: <code>{pending?.tracker}</code></p>}
-    <p className="muted">Відповідь шифрується в браузері. Секрет участі не зберігається у browser storage. Повторна ідентифікація повертає те саме право, а не новий голос.</p></section>;
+    <p className="muted">Відповідь шифрується на вашому пристрої до відправлення. Секрет участі не записується в постійне сховище. Повторне підтвердження повертає те саме право, а не новий голос.</p></section>;
 }
 
 function Tracker({ pollId }: { pollId: string }) {
@@ -118,7 +118,8 @@ function Results({ pollId }: { pollId: string }) {
     <p className="muted preserve">Відкриття (UTC): {result.opensAt}<br />Закриття (UTC): {result.closesAt}</p>
     <p className="notice">{result.representativenessWarning}</p><div>{result.counts.map((count, i) => <div className="result-row" key={i}><div><strong>{Answers[i]}</strong><span>{count} · {percentage(count, result.acceptedVotes)}%</span></div><progress max={result.acceptedVotes === 0 ? 1 : result.acceptedVotes} value={count} aria-label={Answers[i]} /></div>)}</div>
     <p className="muted">Усі три відповіді включено в N. Відсотки округлено до одного десяткового знака; їх сума може відрізнятися від 100% через округлення.</p>
-    <p>Результат опубліковано (Published). Підрахунок перевірено reference implementation Belenios 3.3.0 (ReferenceVerified). Це не зовнішній аудит платформи.</p>
+    <p><strong>Підрахунок перевірено відкритим криптографічним ядром.</strong> Це не зовнішній аудит платформи.</p>
+    <details className="technical-disclosure"><summary>Технічні відомості</summary><p>Стан: Published. Перевірка: ReferenceVerified. Ядро: Belenios 3.3.0.</p></details>
     <div className="action-row"><button className="secondary" onClick={() => download('result-' + pollId + '.json', JSON.stringify(result, null, 2), 'application/json')}>Результат JSON</button><button className="secondary" onClick={() => download('result-' + pollId + '.csv', resultCsv(result), 'text/csv;charset=utf-8')}>Результат CSV</button><button className="secondary" onClick={() => void audit()}>Аудит-пакет</button></div>
     <p className="muted">CSV містить два стовпці: поле та його JSON-значення. Лапки й типи є частиною формату; імпортуйте стовпці як текст.</p>
     <details className="share-card"><summary>Переглянути картку поширення</summary><img src={'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(resultSvg(result))} alt={`Картка результату серед ${result.acceptedVotes} учасників; усі значення наведено вище`} /><button className="secondary" onClick={() => download('share-' + pollId + '.svg', resultSvg(result), 'image/svg+xml')}>Завантажити картку SVG</button><p className="muted">Сторонні копії та скриншоти можуть бути змінені. Картка не замінює перевірку аудит-пакета.</p></details>

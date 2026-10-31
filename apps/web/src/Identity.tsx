@@ -46,7 +46,7 @@ export function Identity({ onSignedIn }: { onSignedIn: (auth: Auth) => void }) {
     } finally { if (mounted.current) setBusy(false); }
   }
   const selected = catalogue?.providers.find(p => p.provider === provider);
-  return <section className="identity-panel"><p className="eyebrow">ДОПУСК ДО УЧАСТІ</p><h1>Підтвердьте тестову особу</h1><p className="lead">Цей режим працює лише із заздалегідь визначеними синтетичними особами. Не вводьте справжній РНОКПП чи документи.</p>
+  return <section className="identity-panel"><p className="eyebrow">ДОПУСК ДО УЧАСТІ</p><h1>Підтвердьте право участі</h1><p className="lead">Оберіть тестову особу. Не вводьте справжній РНОКПП або дані документів.</p>
     {loading && <p role="status">Перевірка доступності провайдерів…</p>}
     <button className="secondary" disabled={busy || loading} onClick={() => void refresh()}>Оновити стан провайдерів</button>
     <p className="muted">Доступність показано на момент останньої перевірки. Стан може змінитися до підтвердження особи.</p>
@@ -61,8 +61,9 @@ export function Identity({ onSignedIn }: { onSignedIn: (auth: Auth) => void }) {
     <button className="primary" disabled={subject === null || busy || loading || selected?.available !== true || tries >= 3 || terminal} onClick={() => void confirm()}>{busy ? 'Підтвердження…' : attempt === null ? 'Підтвердити тестову особу' : `Повторити цю спробу (${tries}/3)`}</button>
     {tries >= 3 && <p role="status">Ліміт трьох спроб вичерпано. Автоматичних повторів немає.</p>}
     {terminal && <button className="secondary" disabled={busy} onClick={restart}>Розпочати нову ідентифікацію</button>}
-    <p className="muted">Зміна провайдера — явна дія. Вже видане право чинне до зафіксованого закриття за політикою цього голосування; збій провайдера сам по собі не відкликає його. Перезавантаження сторінки вимагає нової ідентифікації й не змінює право голосу.</p>
-    {catalogue !== null && <section className="provider-contracts"><h2>Можливості та межі інтеграцій</h2><p>Непідключений провайдер не є каналом відновлення. Два банки BankID залежать від спільного центрального вузла; КЕП і Дія.Підпис можуть мати спільні залежності довіри. Незалежність перевіряється за конкретними контрактами.</p>
+    <p className="muted">Повторне підтвердження або зміна провайдера не створює нового права голосу.</p>
+    <details className="technical-disclosure"><summary>Що відбувається після збою</summary><p>Вже видане право чинне до зафіксованого закриття за політикою голосування. Збій провайдера сам по собі його не відкликає. Після перезавантаження потрібно підтвердити особу знову, але право голосу не змінюється.</p></details>
+    {catalogue !== null && <section className="provider-contracts"><h2>Межі інтеграцій</h2><p>Непідключений провайдер не є резервним каналом. Реальна незалежність залежить від конкретних контрактів і спільних зовнішніх систем.</p>
       {[...catalogue.providers, ...catalogue.production].map(p => <details key={p.provider}><summary>{p.name} — {p.state === 'SyntheticImplemented' ? 'тестова інтеграція' : 'Очікує контракту інтеграції (AwaitingProviderContract)'}</summary><dl>{Object.entries(capabilityLabels).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{Reflect.get(p.capabilities, key)}</dd></div>)}</dl></details>)}
       <p><a href="https://github.com/Lontkovsky/openvote/blob/main/docs/IDENTITY_PROVIDERS.md" target="_blank" rel="noreferrer">Матриця й офіційні джерела ↗</a></p>
     </section>}
