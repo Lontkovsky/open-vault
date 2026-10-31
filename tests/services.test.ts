@@ -14,6 +14,8 @@ import { Ceremony, writeOnce } from '../apps/api/src/provisioning.ts';
 import { ballotApp } from '../apps/api/src/ballot.ts';
 import { identityApp } from '../apps/api/src/identity.ts';
 import { CoreReport } from '../packages/domain/src/checkpoints.ts';
+import { ObserverConfig } from '../packages/domain/src/observer.ts';
+import { observePublic } from '../scripts/observer-client.ts';
 
 const created: { id: string; cryptoId: string }[] = [];
 async function control(provider: 'A' | 'B', available: boolean, conflictingAttributes = false, delayMs = 0) {
@@ -293,6 +295,36 @@ describe('real service boundaries', () => {
       for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
     }
   }, 30000);
+
+  it('blocks stale recovery approval when an acknowledged ballot is missing', async () => {
+    const author = await login('TEST-PERSON-0006', 'A'), moderator = await login('TEST-PERSON-0012', 'A');
+    const voter = await login('TEST-PERSON-0008', 'B'), tokens = [author.token, moderator.token, voter.token];
+    const ballotStore = database(await readConfig('ballot'));
+    try {
+      const poll = await createPoll(author.token, moderator.token, fixtureContent(new Date(Date.now() + 3600000),
+        'Чи блокує зовнішнє свідчення відновлення застарілого backup?'));
+      if (poll.cryptoId === null) throw new Error('RECOVERY_TEST_POLL_NOT_PROVISIONED');
+      const pollId = poll.cryptoId;
+      created.push({ id: poll.id, cryptoId: pollId });
+      const before = required((await ballotStore.query<{ archive: string; state: string }>('SELECT archive,state FROM elections WHERE id=$1', [pollId])).rows[0]);
+      const right = z.object({ credential: z.string() }).parse(await ok('identity', `/v1/credentials/${pollId}`, 'POST', {}, voter.token));
+      const ballot = await generateBallot(before.archive, right.credential, 0);
+      const accepted = z.object({ accepted: z.literal(true), idempotent: z.literal(false), receipt: Envelope })
+        .parse(await ok('ballot', `/v1/elections/${pollId}/ballots`, 'POST', { ballot }));
+      const trust = Trust.parse(JSON.parse(await readFile(`.runtime/trustees/1/${pollId}/trust.json`, 'utf8')));
+      const config = ObserverConfig.parse({ ballotOrigin: 'http://127.0.0.1:4302', managementOrigin: 'http://127.0.0.1:4303',
+        trust, receipts: [accepted.receipt] });
+      const prior = (await observePublic(config, null)).observation;
+
+      await ballotStore.query('DELETE FROM ballots WHERE poll_id=$1', [pollId]);
+      await ballotStore.query('UPDATE elections SET archive=$2,state=$3 WHERE id=$1', [pollId, before.archive, before.state]);
+      await expect(observePublic(config, prior)).rejects.toThrow('ACKNOWLEDGED_BALLOT_MISSING');
+      expect(required((await ballotStore.query<{ count: number }>('SELECT count(*)::int AS count FROM ballots WHERE poll_id=$1', [pollId])).rows[0]).count).toBe(0);
+    } finally {
+      await ballotStore.end();
+      for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
+    }
+  }, 120000);
 
   it('deduplicates A/B, replays late return and exposes outages without weaker admission', async () => {
     const [a, b] = await Promise.all([login('TEST-PERSON-0002', 'A'), login('TEST-PERSON-0002', 'B')]);

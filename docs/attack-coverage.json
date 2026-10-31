@@ -8,8 +8,8 @@
       "title": "Повторні голоси однієї людини",
       "attackerCapabilities": "Concurrent requests, multiple providers/devices, old backup",
       "trustBoundary": "Honest eligibility issuer and authoritative ballot state",
-      "controls": "Keyed identity deduplication, fixed credential per poll, unique ballot credential, idempotent signed receipt",
-      "residualRisk": "Stale writable backup guard not yet implemented",
+      "controls": "Keyed identity deduplication, fixed credential per poll, unique ballot credential, idempotent signed receipt and a no-write recovery gate checked against separately retained observations/receipts",
+      "residualRisk": "The stale ballot database accepted the same encrypted ballot as new before recovery verification. The gate detects retained acknowledgement loss, but cannot recover unretained evidence or force an operator to keep writes disabled",
       "requirements": [
         "15.1",
         "5"
@@ -31,12 +31,16 @@
       "implementationState": "Partial",
       "verification": [
         "tests/services.test.ts",
-        "tools/test_reference.py"
+        "tools/test_reference.py",
+        "scripts/recovery-verify.ts",
+        "tests/observer.test.ts"
       ],
       "actualEvidence": [
-        "artifacts/services/tests.json"
+        "artifacts/services/tests.json",
+        "docs/RECOVERY.md",
+        "The stale synthetic ballot database accepted the same encrypted ballot as non-idempotent; recovery verification with the retained receipt then rejected that restored state before any retry"
       ],
-      "remainingAcceptanceCriteria": "Stale writable backup guard not yet implemented"
+      "remainingAcceptanceCriteria": "Local stale-restore detection is implemented. Automatic host enforcement, complete retained-evidence custody and an actual hosted backup/restore exercise remain pending"
     },
     {
       "id": "A02",
@@ -119,8 +123,8 @@
       "title": "Компрометація БД, логів і backups",
       "attackerCapabilities": "Reads one or all stores, runtime secrets and backups",
       "trustBoundary": "Runtime/host operator controls keys in this simulation",
-      "controls": "Separate DB users and origins, sealed credentials, no application request logging, public encrypted audit, fail-closed runtime disk/database binding and a two-poll synthetic compromise matrix",
-      "residualRisk": "A combined operator with identity and ballot stores plus the runtime sealing key can link pseudonymous participation to ciphertext. Infrastructure/provider log behavior and verified backup/restore finality remain pending operational evidence",
+      "controls": "Separate DB users and origins, sealed credentials, no application request logging, public encrypted audit, fail-closed runtime disk/database binding, a two-poll compromise matrix and recovery verification against external receipts/checkpoints",
+      "residualRisk": "A combined operator can link pseudonymous participation to ciphertext and can bypass the documented no-write recovery procedure. Infrastructure/provider logs and hosted backup custody remain pending operational evidence",
       "requirements": [
         "15.1",
         "15.4"
@@ -136,14 +140,17 @@
       "implementationState": "Partial",
       "verification": [
         "tests/render-start.test.ts",
-        "tests/services.test.ts"
+        "tests/services.test.ts",
+        "tests/observer.test.ts",
+        "scripts/recovery-verify.ts"
       ],
       "actualEvidence": [
         "docs/DEPLOYMENT.md",
         "docs/PRIVACY_COMPROMISE.md",
-        "Identity-only, ballot-only, management-only, combined private stores and public-plus-internal evidence are evaluated separately for person, participation, cross-poll, ciphertext and choice linkage"
+        "Identity-only, ballot-only, management-only, combined private stores and public-plus-internal evidence are evaluated separately for person, participation, cross-poll, ciphertext and choice linkage",
+        "A stale restore that reopened an accepted right was detected by the separately retained receipt; rollback or missing acknowledgement created no recovery approval"
       ],
-      "remainingAcceptanceCriteria": "The synthetic leak/reconstruction experiment is covered. A verified backup/restore exercise preserving accepted ballots and voting finality plus production log/provider custody evidence remain pending"
+      "remainingAcceptanceCriteria": "Synthetic compromise and stale-restore detection are covered. An actual hosted restore, automatic maintenance enforcement and production log/provider/backup custody evidence remain pending"
     },
     {
       "id": "A05",
@@ -255,8 +262,8 @@
       "title": "Цензура та суперечливі історії",
       "attackerCapabilities": "Operator rolls back DB or serves split views",
       "trustBoundary": "Observers must exchange incompatible evidence",
-      "controls": "Separate public observer with pinned signer/manifest, signed history persistence, known acknowledgements, closed-set freeze, catalogue/content comparison, native public result verification, minimal lawful-removal tombstones and a verified static recovery export without identity access or writes",
-      "residualRisk": "Observers must exchange evidence to detect isolated forks; own retained state/trust distribution must be protected. Separately hosted snapshots require explicit operator withdrawal after lawful removal",
+      "controls": "Separate public observer with pinned signer/manifest, signed history persistence, known acknowledgements, closed-set freeze, catalogue/content comparison, native public result verification, minimal lawful-removal tombstones, verified static recovery and a restore approval gate",
+      "residualRisk": "Observers must exchange evidence to detect isolated forks; retained state/trust/receipt custody must be protected. Restore isolation and separately hosted snapshot withdrawal require operator compliance",
       "requirements": [
         "15.1",
         "15.7"
@@ -275,7 +282,8 @@
         "scripts/observer.ts",
         "scripts/audit-export.ts",
         "scripts/mirror-export.ts",
-        "tests/services.test.ts"
+        "tests/services.test.ts",
+        "scripts/recovery-verify.ts"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
@@ -283,9 +291,10 @@
         "artifacts/observer/audit.json",
         "docs/OBSERVER.md",
         "A legal-content incident replaced the public document with a strict four-field tombstone, removed it from catalogue and author views, and preserved only the separate reasoned incident event",
-        "A natively verified static page, result JSON and audit package were served by an independent GET-only host with no identity request; POST returned 405 and removed content produced no export"
+        "A natively verified static page, result JSON and audit package were served by an independent GET-only host with no identity request; POST returned 405 and removed content produced no export",
+        "Recovery approval was created only for state consistent with retained observation and receipt evidence; missing acknowledgement and checkpoint rollback produced no approval"
       ],
-      "remainingAcceptanceCriteria": "V019 local acceptance is covered. Final Browser execution, PR and exact-head CI remain pending; isolated-fork detection and withdrawal of separately hosted snapshots retain their declared operator conditions."
+      "remainingAcceptanceCriteria": "Local observer, withdrawal, static recovery and stale-restore checks are covered. Final Browser execution, hosted recovery exercise, PR and CI remain pending; isolated-fork detection and operator procedures retain their declared conditions."
     },
     {
       "id": "A09",

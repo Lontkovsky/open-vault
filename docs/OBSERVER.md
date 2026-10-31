@@ -21,7 +21,7 @@ Keep previously observed receipts in the configuration when adding more. The com
 
 ## Commands and persistence
 
-The observer takes an action (`init`, `check` or `compare`), followed by the trusted configuration path and state path. `compare` requires a second state path. The audit exporter takes the trusted configuration path and output path. The read-only mirror exporter takes the trusted configuration path and a new output-directory path. All file arguments are required.
+The observer takes an action (`init`, `check` or `compare`), followed by the trusted configuration path and state path. `compare` requires a second state path. The audit exporter takes the trusted configuration path and output path. The read-only mirror exporter takes the trusted configuration path and a new output-directory path. Recovery verification takes trusted configuration, a separately retained prior observation and a new approval path. All file arguments are required.
 
 The following commands were executed successfully against the locally retained synthetic poll `bWR6QtTPMZawJd`. Their configuration is private local runtime input, not a universal configuration for another checkout:
 
@@ -30,6 +30,7 @@ pnpm observer init .runtime/observer-live-trust.json .runtime/observer-live-stat
 pnpm observer check .runtime/observer-live-trust.json .runtime/observer-live-state.json
 pnpm audit:export .runtime/observer-live-trust.json .runtime/observer-live-audit.json
 pnpm mirror:export .runtime/observer-live-trust.json .runtime/observer-live-mirror
+pnpm recovery:verify .runtime/observer-live-trust.json .runtime/observer-live-state.json .runtime/recovery-approval.json
 ```
 
 `init` creates a new observation file exclusively. It cannot replace an existing history. `check` requires that history to exist and be valid; missing/corrupt state never causes implicit initialization. Successful writes use a temporary file, fsync, atomic link/rename and a directory fsync. Failures leave the prior history unchanged. A per-state lock rejects concurrent writers. A lock left by a killed process is not automatically removed: inspect the process and evidence before explicitly removing the stale lock. This fail-closed maintenance condition is not an alternate observer workflow.
@@ -39,6 +40,8 @@ State contains the trusted configuration, signed checkpoints, management ID and 
 `ReferenceVerified` means the current published archive passed the original Belenios verifier and application contract/checkpoint comparisons. `CheckpointsOnly` means signed history was checked but no public native tally was available. Neither means independent audit of the deployed platform. An unpublishable, removed or missing resource fails the relevant check/export instead of creating a replacement result.
 
 `mirror:export` is the single recovery path for another hosting provider. It performs the same current public checks and native verification, then creates a new directory containing `index.html`, `result.json` and `audit.json`. The page has no script, form, identity connection, session or write endpoint. The output directory must not already exist, and a failed export is removed. Serve the directory as immutable static files. The command does not synchronize, refresh or republish an earlier snapshot; a lawful withdrawal requires the separately hosted copy to be withdrawn by its operator.
+
+`recovery:verify` is the restore gate described in `docs/RECOVERY.md`. It compares a restored public view with the prior signed history and every receipt retained in the configuration. It creates a strict approval file exclusively; rollback, missing acknowledgement, changed content or verification failure creates no approval. The restored environment must remain isolated from write traffic until every required poll passes. This gate cannot recover evidence that was never retained or force a malicious host operator to run it.
 
 ## Detection and limitations
 

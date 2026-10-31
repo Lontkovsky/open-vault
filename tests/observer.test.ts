@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { z } from 'zod';
 import { Checkpoint, Envelope, Manifest, Poll, Receipt } from '../packages/domain/src/index.ts';
 import { CoreReport, digest, verifyChain } from '../packages/domain/src/checkpoints.ts';
-import { AuditPackage, ObserverConfig, Observation, PublicView, compareObservations, inspectObservation, observerChain, verifyPublicAudit } from '../packages/domain/src/observer.ts';
+import { AuditPackage, ObserverConfig, Observation, PublicView, RecoveryApproval, compareObservations, inspectObservation, observerChain, verifyPublicAudit } from '../packages/domain/src/observer.ts';
 import { observePublic } from '../scripts/observer-client.ts';
 import { localCore } from '../scripts/local-core.ts';
 
@@ -253,5 +253,29 @@ describe('independent public observer', () => {
       if (mirrorServer !== null) await new Promise<void>((resolve, reject) => mirrorServer?.close(error => error ? reject(error) : resolve()));
       await rm(directory, { recursive: true, force: true });
     }
+  }, 60000);
+
+  it('creates recovery approval only for state consistent with retained evidence', async () => {
+    const directory = await mkdtemp('.runtime/observer-recovery-test-');
+    try {
+      const configFile = join(directory, 'trust.json'), priorFile = join(directory, 'prior.json'), approvalFile = join(directory, 'approval.json');
+      await writeFile(configFile, JSON.stringify(config));
+      await writeFile(priorFile, JSON.stringify((await observePublic(config, null)).observation));
+      const run = (target: string) => execute(process.execPath, ['scripts/recovery-verify.ts', configFile, priorFile, target], { timeout: 30000 });
+      expect((await run(approvalFile)).stdout).toContain('RecoveryEvidenceVerified');
+      const approval = RecoveryApproval.parse(JSON.parse(await readFile(approvalFile, 'utf8')));
+      expect(approval).toMatchObject({ format: 'openvote-recovery-approval-v1', pollId: trusted.pollId, checkpoints: checkpoints.length,
+        verification: 'ReferenceVerified', publishedArchiveHash: digest(Buffer.from(audit.archive, 'base64')) });
+      await expect(run(approvalFile)).rejects.toThrow();
+
+      mode = 'missing-receipt';
+      const missing = join(directory, 'missing.json');
+      await expect(run(missing)).rejects.toThrow();
+      await expect(readFile(missing)).rejects.toMatchObject({ code: 'ENOENT' });
+      mode = 'rollback';
+      const stale = join(directory, 'stale.json');
+      await expect(run(stale)).rejects.toThrow();
+      await expect(readFile(stale)).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally { await rm(directory, { recursive: true, force: true }); }
   }, 60000);
 });

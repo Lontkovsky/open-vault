@@ -15,6 +15,10 @@ export const AuditPackage = z.strictObject({ format: z.literal('openvote-audit-v
 export const Observation = z.strictObject({ format: z.literal('openvote-observer-v1'), config: ObserverConfig,
   managementId: z.string().uuid(), checkpoints: z.array(Envelope).min(1),
   verification: z.enum(['CheckpointsOnly', 'ReferenceVerified']), publishedArchiveHash: z.string().nullable() });
+export const RecoveryApproval = z.strictObject({ format: z.literal('openvote-recovery-approval-v1'),
+  pollId: z.string().regex(/^[A-Za-z0-9]{14}$/), observationHash: z.string().regex(/^[0-9a-f]{64}$/),
+  checkpoints: z.number().int().positive(), verification: z.enum(['CheckpointsOnly', 'ReferenceVerified']),
+  publishedArchiveHash: z.string().nullable() });
 export const PublicView = z.strictObject({
   manifest: z.object({ electionRaw: z.string(), manifestHash: z.string(), checkpointPublicKey: z.string() }),
   checkpoints: z.object({ checkpoints: z.array(Envelope).min(1), publicKey: z.string() }),

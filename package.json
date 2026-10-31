@@ -23,6 +23,7 @@
     "observer": "node scripts/observer.ts",
     "audit:export": "node scripts/audit-export.ts",
     "mirror:export": "node scripts/mirror-export.ts",
+    "recovery:verify": "node scripts/recovery-verify.ts",
     "lint": "python3 scripts/scan-public.py && git diff --check",
     "types": "tsc --noEmit",
     "build": "pnpm --filter @openvote/web build",
