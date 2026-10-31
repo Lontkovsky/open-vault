@@ -297,7 +297,7 @@ describe('real service boundaries', () => {
   }, 30000);
 
   it('blocks stale recovery approval when an acknowledged ballot is missing', async () => {
-    const author = await login('TEST-PERSON-0006', 'A'), moderator = await login('TEST-PERSON-0012', 'A');
+    const author = await login('TEST-PERSON-0005', 'A'), moderator = await login('TEST-PERSON-0012', 'A');
     const voter = await login('TEST-PERSON-0008', 'B'), tokens = [author.token, moderator.token, voter.token];
     const ballotStore = database(await readConfig('ballot'));
     try {

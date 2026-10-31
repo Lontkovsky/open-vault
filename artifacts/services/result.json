@@ -2,7 +2,7 @@
   "apiVersion": "v1",
   "question": "Чи підтримуєте відкриту перевірку синтетичного інтеграційного сценарію?",
   "version": 1,
-  "pollId": "vWsZHr8MSSRDi4",
+  "pollId": "3LnejHJ1dG6Dz9",
   "policy": {
     "id": "verified-rnokpp-owner",
     "version": 1
@@ -13,8 +13,8 @@
     1,
     1
   ],
-  "opensAt": "2026-10-30T14:59:57.354Z",
-  "closesAt": "2026-10-30T15:00:33.354Z",
+  "opensAt": "2026-10-31T11:23:29.727Z",
+  "closesAt": "2026-10-31T11:24:05.727Z",
   "state": "Published",
   "verification": "ReferenceVerified",
   "selfSelected": true,
