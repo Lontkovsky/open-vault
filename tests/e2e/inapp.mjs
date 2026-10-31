@@ -86,8 +86,12 @@ export async function createRunner(tab) {
       await sources[1].fill('https://www.belenios.org/faq.html'); await state();
       await p.getByRole('combobox', { name: 'Категорія', exact: true }).selectOption('Технології'); await state();
       await fill('Публічний псевдонім автора', 'Браузерний тест');
-      await fill('Відкриття (місцевий час)', localDate(new Date(Date.now() - 60000).toISOString()));
       await fill('Закриття (місцевий час)', localDate(run.closesAt));
+      await fill('Відкриття (місцевий час)', localDate(new Date(Date.parse(run.closesAt) + 60000).toISOString()));
+      await click('button', 'Зберегти чернетку');
+      await p.getByRole('alert').filter({ hasText: 'INVALID_SCHEDULE' }).waitFor({ state: 'visible' });
+      assertions.push('Invalid opening-after-closing schedule is visibly rejected');
+      await fill('Відкриття (місцевий час)', localDate(new Date(Date.now() - 60000).toISOString()));
       await click('button', 'Зберегти чернетку'); await visible('heading', title);
       pollId = (await tab.url()).split('#/poll/')[1];
       if (!/^[a-f0-9-]{36}$/.test(pollId)) throw new Error('CREATED_POLL_ID_MISSING');
@@ -179,6 +183,7 @@ export async function createRunner(tab) {
       await p.getByRole('status').filter({ hasText: 'Бюлетень включено. Підпис квитанції перевірено.' }).waitFor({ state: 'visible' });
       if (!(await p.getByText('Добровільна участь із самовідбором.', { exact: false }).count() >= 1)) throw new Error('SELF_SELECTION_WARNING_MISSING');
       await click('link', 'Центр довіри'); await visible('heading', 'Зовнішні спостерігачі');
+      await p.getByText('Технічні відомості', { exact: true }).press('Enter'); await state();
       await p.getByText('Суперечливі історії виявляються після обміну свідченнями.', { exact: false }).waitFor({ state: 'visible' });
       await openPoll();
       assertions.push('Trust center discloses the independent observer and the split-view comparison condition');

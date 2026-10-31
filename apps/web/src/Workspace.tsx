@@ -71,15 +71,18 @@ export function MyPolls({ auth }: { auth: Auth }) {
 const rubricLabels = { singleProposal: 'Одна пропозиція без навідного формулювання', noDoubleNegation: 'Без подвійного заперечення', clearTerms: 'Терміни зрозумілі', explicitConsequences: 'Умови й істотні наслідки явні', factsSeparated: 'Факти відокремлені від оцінок' };
 export function ReviewQueue({ auth }: { auth: Auth }) {
   const [polls, setPolls] = useState<PollType[] | null>(null), [appeals, setAppeals] = useState<{ id: string; poll_id: string; reason: string }[]>([]);
-  const [error, setError] = useState<string | null>(null), [revision, setRevision] = useState(0), [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null), [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  useEffect(() => { request('management', '/v1/review-queue', 'GET', undefined, auth.token).then(value => { const data = z.object({ polls: z.array(Poll), appeals: z.array(z.object({ id: z.string(), poll_id: z.string(), reason: z.string() })) }).parse(value); setPolls(data.polls); setAppeals(data.appeals); }).catch((e: Error) => setError(e.message)); }, [auth.token, revision]);
+  useEffect(() => { request('management', '/v1/review-queue', 'GET', undefined, auth.token).then(value => { const data = z.object({ polls: z.array(Poll), appeals: z.array(z.object({ id: z.string(), poll_id: z.string(), reason: z.string() })) }).parse(value); setPolls(data.polls); setAppeals(data.appeals); }).catch((e: Error) => setError(e.message)); }, [auth.token]);
   async function submit(event: FormEvent<HTMLFormElement>, id: string, appeal: boolean) {
     event.preventDefault(); const data = new FormData(event.currentTarget); setBusy(true); setError(null); setNotice(null);
     try { const reason = z.string().parse(data.get('reason'));
       const body = appeal ? { reason, reopen: data.get('reopen') === 'on' } : { reason, action: z.string().parse(data.get('action')),
         rubric: Rubric.parse(Object.fromEntries(Object.keys(rubricLabels).map(key => [key, data.get(key) === 'on']))) };
-      await request('management', appeal ? `/v1/appeals/${id}/resolve` : `/v1/polls/${id}/review`, 'POST', body, auth.token); setRevision(n => n + 1); setNotice('Рішення зафіксовано.');
+      await request('management', appeal ? `/v1/appeals/${id}/resolve` : `/v1/polls/${id}/review`, 'POST', body, auth.token);
+      if (appeal) setAppeals(current => current.filter(item => item.id !== id));
+      else setPolls(current => current === null ? null : current.filter(poll => poll.id !== id));
+      setNotice('Рішення зафіксовано.');
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); } finally { setBusy(false); }
   }
   return <section><p className="eyebrow">ПРОЗОРІ РІШЕННЯ</p><h1>Модерація й оскарження</h1><p>Публікація вимагає всіх п’яти критеріїв. Відхилення й позначення дубліката потребують пояснення та можуть бути оскаржені.</p><ErrorMessage message={error} />{notice !== null && <p role="status">{notice}</p>}{polls === null ? <p role="status">Завантаження…</p> : polls.length === 0 ? <p>Питань у черзі немає.</p> : polls.map(p => <form className="content-paper" key={p.id} onSubmit={e => void submit(e, p.id, false)}><h2><a href={`#/poll/${p.id}`}>{p.content.question}</a></h2><p>{p.content.context}</p><fieldset disabled={busy}><legend>Методологічні критерії</legend>{Object.entries(rubricLabels).map(([key, label]) => <label className="choice" key={key}><input type="checkbox" name={key} />{label}</label>)}<label>Рішення<select name="action"><option value="approve">Схвалити</option><option value="reject">Відхилити</option><option value="duplicate">Позначити дублікатом</option></select></label><label>Причина рішення<textarea name="reason" required minLength={15} maxLength={2000} /></label><button className="primary" type="submit">{busy ? 'Перевірка та фіксація…' : 'Зафіксувати рішення'}</button></fieldset></form>)}

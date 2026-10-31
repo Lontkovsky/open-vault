@@ -27,13 +27,34 @@ jobs:
           docker run --rm --platform linux/amd64 --entrypoint node openvote-render:ci scripts/test-render-gateway.ts
       - name: Build minimal demand launch image
         run: docker build --platform linux/amd64 -f infra/demand.Dockerfile -t openvote-demand:ci .
+      - name: Install pinned runtime scanner
+        uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
+        with:
+          version: v0.70.0
+          cache: true
+      - name: Report runtime vulnerabilities
+        run: |
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --exit-code 0 --no-progress --timeout 10m openvote-crypto:3.3.0
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --exit-code 0 --no-progress --timeout 10m openvote-render:ci
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --exit-code 0 --no-progress --timeout 10m openvote-demand:ci
+      - name: Reject fixable runtime vulnerabilities
+        run: |
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress --timeout 10m openvote-crypto:3.3.0
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress --timeout 10m openvote-render:ci
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress --timeout 10m openvote-demand:ci
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: 24.20.0
       - name: Install locked workspace
         run: npm install -g pnpm@10.33.0 && pnpm install --frozen-lockfile
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+      - name: Verify reproducible clients and release evidence
+        run: pnpm release:verify artifacts/release-ci
       - name: Bootstrap isolated synthetic services
-        run: pnpm bootstrap
+        run: |
+          pnpm bootstrap
+          pnpm migrate
       - name: Start local application
         run: |
           node scripts/dev.mjs > .runtime/dev.log 2>&1 &
@@ -52,4 +73,9 @@ jobs:
         with:
           name: reference-public-evidence
           path: artifacts/reference
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-public-evidence
+          path: artifacts/release-ci
           retention-days: 14

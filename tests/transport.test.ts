@@ -1,6 +1,75 @@
 import { describe, expect, it } from 'vitest';
 import { setTimeout } from 'node:timers/promises';
-import { application } from '../apps/api/src/common.ts';
+import { application, serviceResourceLimits } from '../apps/api/src/common.ts';
+
+it('rejects request bodies above the shared limit', async () => {
+  const app = await application({ environment: 'test', role: 'management', port: 0, serviceToken: 'synthetic-body-limit-token-not-a-real-secret' }, 'http://localhost:5173');
+  app.post('/bounded-body', async () => ({ accepted: true }));
+  try {
+    const response = await app.inject({ method: 'POST', url: '/bounded-body', headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify({ value: 'x'.repeat(serviceResourceLimits.requestBodyBytes) }) });
+    expect(response.statusCode).toBe(413);
+    expect(response.json()).toEqual({ error: 'INVALID_INPUT' });
+  } finally { await app.close(); }
+});
+
+it('bounds active requests and the waiting queue', async () => {
+  const app = await application({ environment: 'test', role: 'management', port: 0, serviceToken: 'synthetic-queue-limit-token-not-a-real-secret' }, 'http://localhost:5173');
+  let active = 0, maximum = 0, release!: () => void, activeLimitReached!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  const activeLimit = new Promise<void>(resolve => { activeLimitReached = resolve; });
+  app.get('/held', async () => {
+    active += 1;
+    maximum = Math.max(maximum, active);
+    if (active === serviceResourceLimits.activeRequests) activeLimitReached();
+    await held;
+    active -= 1;
+    return { accepted: true };
+  });
+  const origin = await app.listen({ host: '127.0.0.1', port: 0 });
+  try {
+    const total = serviceResourceLimits.activeRequests + serviceResourceLimits.queuedRequests + 1;
+    const pending = Array.from({ length: total }, () => fetch(origin + '/held'));
+    await activeLimit;
+    const overflowStarted = Date.now();
+    const overflow = await Promise.race(pending);
+    expect(overflow.status).toBe(503);
+    expect(Date.now() - overflowStarted).toBeLessThan(serviceResourceLimits.queueWaitMs);
+    release();
+    const responses = await Promise.all(pending);
+    expect(responses.filter(response => response.status === 200)).toHaveLength(total - 1);
+    expect(responses.filter(response => response.status === 503)).toHaveLength(1);
+    expect(await responses.find(response => response.status === 503)?.json()).toEqual({ error: 'SERVER_BUSY' });
+    expect(maximum).toBe(serviceResourceLimits.activeRequests);
+  } finally { release(); await app.close(); }
+});
+
+it('expires a queued request at the declared wait limit', async () => {
+  const app = await application({ environment: 'test', role: 'management', port: 0, serviceToken: 'synthetic-queue-timeout-token-not-a-real-secret' }, 'http://localhost:5173');
+  let active = 0, release!: () => void, activeLimitReached!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  const activeLimit = new Promise<void>(resolve => { activeLimitReached = resolve; });
+  app.get('/held', async () => {
+    active += 1;
+    if (active === serviceResourceLimits.activeRequests) activeLimitReached();
+    await held;
+    return { accepted: true };
+  });
+  const origin = await app.listen({ host: '127.0.0.1', port: 0 });
+  try {
+    const holders = Array.from({ length: serviceResourceLimits.activeRequests }, () => fetch(origin + '/held'));
+    await activeLimit;
+    const started = Date.now();
+    const queued = await fetch(origin + '/held');
+    const elapsed = Date.now() - started;
+    expect(queued.status).toBe(503);
+    expect(await queued.json()).toEqual({ error: 'SERVER_BUSY' });
+    expect(elapsed).toBeGreaterThanOrEqual(serviceResourceLimits.queueWaitMs - 100);
+    expect(elapsed).toBeLessThan(serviceResourceLimits.queueWaitMs + 2000);
+    release();
+    expect((await Promise.all(holders)).every(response => response.status === 200)).toBe(true);
+  } finally { release(); await app.close(); }
+});
 
 it('keeps a bounded eleven-second native-processing response connected', async () => {
   const app = await application({ environment: 'test', role: 'management', port: 0, serviceToken: 'synthetic-transport-test-token-not-a-real-secret' }, 'http://localhost:5173');

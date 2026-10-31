@@ -8,8 +8,8 @@
       "title": "Повторні голоси однієї людини",
       "attackerCapabilities": "Concurrent requests, multiple providers/devices, old backup",
       "trustBoundary": "Honest eligibility issuer and authoritative ballot state",
-      "controls": "Keyed identity deduplication, fixed credential per poll, unique ballot credential, idempotent signed receipt",
-      "residualRisk": "Stale writable backup guard not yet implemented",
+      "controls": "Keyed identity deduplication, fixed credential per poll, unique ballot credential, idempotent signed receipt and a no-write recovery gate checked against separately retained observations/receipts",
+      "residualRisk": "The stale ballot database accepted the same encrypted ballot as new before recovery verification. The gate detects retained acknowledgement loss, but cannot recover unretained evidence or force an operator to keep writes disabled",
       "requirements": [
         "15.1",
         "5"
@@ -24,19 +24,25 @@
       "prs": [
         "https://github.com/Lontkovsky/openvote/pull/42",
         "https://github.com/Lontkovsky/openvote/pull/49",
-        "https://github.com/Lontkovsky/openvote/pull/50"
+        "https://github.com/Lontkovsky/openvote/pull/50",
+        "https://github.com/Lontkovsky/openvote/pull/69"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
       "implementationState": "Partial",
       "verification": [
         "tests/services.test.ts",
-        "tools/test_reference.py"
+        "tools/test_reference.py",
+        "scripts/recovery-verify.ts",
+        "tests/observer.test.ts"
       ],
       "actualEvidence": [
-        "artifacts/services/tests.json"
+        "artifacts/services/tests.json",
+        "docs/RECOVERY.md",
+        "The ballot API rejected a corrupted zero-knowledge proof, accepted exactly one of two distinct concurrent ciphertexts for the same cross-provider right, and returned idempotent receipts for five exact redeliveries",
+        "The stale synthetic ballot database accepted the same encrypted ballot as non-idempotent; recovery verification with the retained receipt then rejected that restored state before any retry"
       ],
-      "remainingAcceptanceCriteria": "Stale writable backup guard not yet implemented"
+      "remainingAcceptanceCriteria": "Local stale-restore detection is implemented. Automatic host enforcement, complete retained-evidence custody and an actual hosted backup/restore exercise remain pending"
     },
     {
       "id": "A02",
@@ -57,7 +63,8 @@
       ],
       "prs": [
         "https://github.com/Lontkovsky/openvote/pull/42",
-        "https://github.com/Lontkovsky/openvote/pull/49"
+        "https://github.com/Lontkovsky/openvote/pull/49",
+        "https://github.com/Lontkovsky/openvote/pull/69"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -69,7 +76,8 @@
       ],
       "actualEvidence": [
         "artifacts/reference/reference-report.json",
-        "artifacts/services/tests.json"
+        "artifacts/services/tests.json",
+        "The current API/native fixture accepted only the committed credential set, returned the same recovery credential, and rejected foreign admission plus roster, manifest, environment and trustee-key replacement"
       ],
       "remainingAcceptanceCriteria": "Replacing the trusted roster admits an issuer-created credential without proving a person exists; independently trusted roster provenance and complete role/collusion evidence remain open"
     },
@@ -78,8 +86,8 @@
       "title": "Встановлення вибору конкретної людини",
       "attackerCapabilities": "Operator correlates metadata or requests selected decryption",
       "trustBoundary": "Honest trustee clients; enough independent key holders",
-      "controls": "Client Belenios encryption; native trustee guard checks manifest, aggregate, final set, deadline and minimum group; original check_factor validates each share before storage; durable one-final-set binding",
-      "residualRisk": "First self-consistent signed fork requires external acknowledgement evidence; issuer links person to ciphertext; sufficient key collusion and unanimity can reveal choices",
+      "controls": "Client Belenios encryption; native trustee guard checks manifest, aggregate, final set, deadline and minimum group; original check_factor validates each share before storage; durable one-final-set binding; receipts omit choice and participant secrets",
+      "residualRisk": "Combined identity/ballot/runtime access links a pseudonym to ciphertext; real-person mapping depends on provider evidence or enumeration. First-fork completeness, sufficient trustee collusion, compromised devices, disclosed participant secrets and unanimity can reveal choices",
       "requirements": [
         "15.1",
         "15.4"
@@ -100,30 +108,33 @@
         "tests/services.test.ts",
         "tests/trustees.test.ts",
         "tools/test_reference.py",
-        "tests/e2e/inapp.mjs"
+        "tests/e2e/inapp.mjs",
+        "docs/PRIVACY_COMPROMISE.md"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
         "artifacts/reference/reference-report.json",
         "artifacts/e2e/report.json",
         "artifacts/e2e/verification.json",
-        "docs/TRUSTEE_VERIFICATION.md"
+        "docs/TRUSTEE_VERIFICATION.md",
+        "Two independent polls proved that combined identity and ballot stores plus the runtime sealing key map the same pseudonymous voter to both accepted ciphertexts without publishing any credential or tracker",
+        "Each open native archive verified with one encrypted ballot and no result; the strict receipt contained no answer or private credential"
       ],
-      "remainingAcceptanceCriteria": "Independently retained acknowledgement journal and first-fork completeness remain open; key-collusion and identity-linkage experiments remain separate work"
+      "remainingAcceptanceCriteria": "Identity-linkage behavior is now measured. Independently retained first-fork evidence, provider-to-real-person mapping review, trustee-collusion resistance and compromised-client resistance remain explicit limits"
     },
     {
       "id": "A04",
       "title": "Компрометація БД, логів і backups",
       "attackerCapabilities": "Reads one or all stores, runtime secrets and backups",
       "trustBoundary": "Runtime/host operator controls keys in this simulation",
-      "controls": "Separate DB users, sealed credentials, no request logging, public encrypted audit, and fail-closed runtime disk/database binding",
-      "residualRisk": "Runtime persistence mismatch is tested; full synthetic leak/reconstruction and verified backup/restore remain pending",
+      "controls": "Separate DB users and origins, sealed credentials, no application request logging, public encrypted audit, fail-closed runtime disk/database binding, a two-poll compromise matrix and recovery verification against external receipts/checkpoints",
+      "residualRisk": "A combined operator can link pseudonymous participation to ciphertext and can bypass the documented no-write recovery procedure. Infrastructure/provider logs and hosted backup custody remain pending operational evidence",
       "requirements": [
         "15.1",
         "15.4"
       ],
       "issues": [
-        "https://github.com/Lontkovsky/openvote/issues/27",
+        "https://github.com/Lontkovsky/openvote/issues/31",
         "https://github.com/Lontkovsky/openvote/issues/33",
         "https://github.com/Lontkovsky/openvote/issues/51"
       ],
@@ -132,12 +143,18 @@
       "evidenceState": "AutomatedTested",
       "implementationState": "Partial",
       "verification": [
-        "tests/render-start.test.ts"
+        "tests/render-start.test.ts",
+        "tests/services.test.ts",
+        "tests/observer.test.ts",
+        "scripts/recovery-verify.ts"
       ],
       "actualEvidence": [
-        "docs/DEPLOYMENT.md"
+        "docs/DEPLOYMENT.md",
+        "docs/PRIVACY_COMPROMISE.md",
+        "Identity-only, ballot-only, management-only, combined private stores and public-plus-internal evidence are evaluated separately for person, participation, cross-poll, ciphertext and choice linkage",
+        "A stale restore that reopened an accepted right was detected by the separately retained receipt; rollback or missing acknowledgement created no recovery approval"
       ],
-      "remainingAcceptanceCriteria": "Full synthetic leak/reconstruction experiment and a verified backup/restore exercise that preserves ballots and voting finality remain pending"
+      "remainingAcceptanceCriteria": "Synthetic compromise and stale-restore detection are covered. An actual hosted restore, automatic maintenance enforcement and production log/provider/backup custody evidence remain pending"
     },
     {
       "id": "A05",
@@ -185,7 +202,7 @@
       "title": "Маніпуляція формулюванням і контекстом",
       "attackerCapabilities": "Author/moderator changes official content or manipulates language",
       "trustBoundary": "Honest review and client receiving expected code",
-      "controls": "Five-point rubric, fixed official manifest/context and client comparison; the demand assistant uses the shared FAQ as its only approved context, disables tools and web access, and has strict prompt-boundary and request-limit tests",
+      "controls": "Five-point rubric, reasoned duplicate decisions with an appeal journal, fixed official manifest/context across management and ballot APIs, retained predecessor links and client comparison; the demand assistant uses the shared FAQ as its only approved context, disables tools and web access, and has strict prompt-boundary and request-limit tests",
       "residualRisk": "External model behavior, the broader malicious language suite and source/content removal policy tests remain pending",
       "requirements": [
         "15.1",
@@ -194,11 +211,12 @@
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/21",
         "https://github.com/Lontkovsky/openvote/issues/22",
-        "https://github.com/Lontkovsky/openvote/issues/29",
+        "https://github.com/Lontkovsky/openvote/issues/28",
         "https://github.com/Lontkovsky/openvote/issues/65"
       ],
       "prs": [
-        "https://github.com/Lontkovsky/openvote/pull/49"
+        "https://github.com/Lontkovsky/openvote/pull/49",
+        "https://github.com/Lontkovsky/openvote/pull/69"
       ],
       "defenseOutcome": "PartiallyMitigated",
       "evidenceState": "AutomatedTested",
@@ -211,7 +229,9 @@
       "actualEvidence": [
         "artifacts/services/tests.json",
         "artifacts/reference/reference-report.json",
-        "docs/PROGRESS.md"
+        "docs/PROGRESS.md",
+        "The actual management API rejects participant review and appeal resolution, requires every rubric item before approval, records the duplicate reason, permits an author appeal and records the moderator resolution before reopening the draft",
+        "The focused lifecycle scenario rejects invalid deadlines and post-open edits, compares management, embedded and served official context, requires a structured cancellation reason and retains the predecessor link"
       ],
       "remainingAcceptanceCriteria": "External model behavior, the broader malicious language suite and source/content removal policy tests remain pending"
     },
@@ -221,37 +241,44 @@
       "attackerCapabilities": "One confirmed author creates many paraphrased questions",
       "trustBoundary": "Cross-provider deduplication; nonpersonalized catalog",
       "controls": "Draft cap, publication quotas/cooldown/open limit; visible chronological sorting; similar search",
-      "residualRisk": "Mass publishing and quota bypass tests pending",
+      "residualRisk": "An operator with source or database control can bypass application quotas; external observation and governance remain required",
       "requirements": [
         "15.1",
         "15.6"
       ],
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/21",
-        "https://github.com/Lontkovsky/openvote/issues/30"
+        "https://github.com/Lontkovsky/openvote/issues/29"
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
-      "evidenceState": "NotTested",
-      "implementationState": "Partial",
-      "verification": [],
-      "actualEvidence": [],
-      "remainingAcceptanceCriteria": "Mass publishing and quota bypass tests pending"
+      "evidenceState": "AutomatedTested",
+      "implementationState": "Implemented",
+      "verification": [
+        "tests/services.test.ts"
+      ],
+      "actualEvidence": [
+        "The actual management API accepted one pseudonymous draft and its edit through the same person recovered by another provider, rejected an unverified author, a different author, missing bilateral arguments, a missing source and editing after submission",
+        "Three distinct synthetic similar questions remained separate and followed the same explicit created-at-descending and identifier tie-break order as the nonpersonalized public catalogue; the private review item was absent",
+        "Seven concurrent paraphrased drafts sent through provider A and B produced exactly six accepted drafts and one DRAFT_LIMIT_REACHED response for the shared deduplicated author",
+        "The actual management API rejected a fourth publication within 24 hours, a publication during the configured cooldown and a third simultaneously open poll with distinct exact error contracts"
+      ],
+      "remainingAcceptanceCriteria": "V010 and V018 development acceptance is covered; operator bypass and production governance remain separate risks"
     },
     {
       "id": "A08",
       "title": "Цензура та суперечливі історії",
       "attackerCapabilities": "Operator rolls back DB or serves split views",
       "trustBoundary": "Observers must exchange incompatible evidence",
-      "controls": "Separate public observer with pinned signer/manifest, signed history persistence, known acknowledgements, closed-set freeze, catalogue/content comparison and native public result verification",
-      "residualRisk": "Observers must exchange evidence to detect isolated forks; own retained state/trust distribution must be protected. Lawful tombstones and external read-only restoration remain open",
+      "controls": "Separate public observer with pinned signer/manifest, signed history persistence, known acknowledgements, closed-set freeze, catalogue/content comparison, native public result verification, minimal lawful-removal tombstones, verified static recovery and a restore approval gate",
+      "residualRisk": "Observers must exchange evidence to detect isolated forks; retained state/trust/receipt custody must be protected. Restore isolation and separately hosted snapshot withdrawal require operator compliance",
       "requirements": [
         "15.1",
         "15.7"
       ],
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/27",
-        "https://github.com/Lontkovsky/openvote/issues/29",
+        "https://github.com/Lontkovsky/openvote/issues/30",
         "https://github.com/Lontkovsky/openvote/issues/33"
       ],
       "prs": [],
@@ -261,23 +288,29 @@
       "verification": [
         "tests/observer.test.ts",
         "scripts/observer.ts",
-        "scripts/audit-export.ts"
+        "scripts/audit-export.ts",
+        "scripts/mirror-export.ts",
+        "tests/services.test.ts",
+        "scripts/recovery-verify.ts"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
         "artifacts/observer/observation.json",
         "artifacts/observer/audit.json",
-        "docs/OBSERVER.md"
+        "docs/OBSERVER.md",
+        "A legal-content incident replaced the public document with a strict four-field tombstone, removed it from catalogue and author views, and preserved only the separate reasoned incident event",
+        "A natively verified static page, result JSON and audit package were served by an independent GET-only host with no identity request; POST returned 405 and removed content produced no export",
+        "Recovery approval was created only for state consistent with retained observation and receipt evidence; missing acknowledgement and checkpoint rollback produced no approval"
       ],
-      "remainingAcceptanceCriteria": "Observer PR #47 merged after passing local tests and CI. Lawful tombstones, coordinated withdrawal and external read-only restoration remain open."
+      "remainingAcceptanceCriteria": "Local observer, withdrawal, static recovery and stale-restore checks are covered. Final Browser execution, hosted recovery exercise, PR and CI remain pending; isolated-fork detection and operator procedures retain their declared conditions."
     },
     {
       "id": "A09",
       "title": "Підміна збірки та непрозоре управління",
       "attackerCapabilities": "Owner/CI/host substitutes executable code",
       "trustBoundary": "Trusted source/release reference held separately",
-      "controls": "Pinned upstream/dependencies, public PRs/governance and restricted CI permissions",
-      "residualRisk": "Two-clean-build comparison, independent client monitor and release locking pending",
+      "controls": "Pinned upstream/dependencies, public PRs and restricted CI permissions; two-clean-client-build byte comparison; complete client manifests/checksums; CycloneDX SBOM; source/toolchain provenance; separately trusted client monitor",
+      "residualRisk": "Self-generated provenance is unsigned; independent monitor operation, selective-delivery resistance, native/runtime reproducibility and complete release governance remain pending",
       "requirements": [
         "15.1",
         "15.8"
@@ -290,26 +323,36 @@
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
-      "evidenceState": "NotTested",
+      "evidenceState": "AutomatedTested",
       "implementationState": "Partial",
-      "verification": [],
-      "actualEvidence": [],
-      "remainingAcceptanceCriteria": "Two-clean-build comparison, independent client monitor and release locking pending"
+      "verification": [
+        "scripts/reproducible-release.ts",
+        "scripts/client-monitor.ts",
+        "tests/release-integrity.test.ts",
+        ".github/workflows/ci.yml"
+      ],
+      "actualEvidence": [
+        "docs/REPRODUCIBLE_RELEASE.md",
+        "The real HTTP monitor accepted the trusted HTML/JavaScript pair and rejected substituted JavaScript at the same path",
+        "The release command compares every full and demand client byte from two fresh source and dependency directories before writing manifests, checksums, SBOM and provenance"
+      ],
+      "remainingAcceptanceCriteria": "Operate the monitor independently, sign release attestations, extend reproducibility to native/runtime artifacts and complete release governance"
     },
     {
       "id": "A10",
       "title": "Недоступність провайдера ідентифікації",
-      "attackerCapabilities": "A/B failure, delayed callbacks and conflicting claims",
+      "attackerCapabilities": "A/B failure, delayed callbacks, conflicting claims and request bursts",
       "trustBoundary": "A and B have distinct mock keys/processes; real upstream unknown",
-      "controls": "Idempotent return; same person/credential through B; conflict revokes session; production mocks refused",
-      "residualRisk": "Production adapters AwaitingProviderContract; real upstream independence and production attribute contracts unverified",
+      "controls": "Idempotent return; same person/credential through B; conflict revokes session; production mocks refused; eight active requests, sixteen FIFO waiters and two-second queue expiry per service process",
+      "residualRisk": "Production adapters AwaitingProviderContract; real upstream independence, upstream DDoS protection and production attribute contracts unverified",
       "requirements": [
         "15.1",
         "15.9"
       ],
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/17",
-        "https://github.com/Lontkovsky/openvote/issues/18"
+        "https://github.com/Lontkovsky/openvote/issues/18",
+        "https://github.com/Lontkovsky/openvote/issues/34"
       ],
       "prs": [
         "https://github.com/Lontkovsky/openvote/pull/43",
@@ -321,37 +364,48 @@
       "verification": [
         "tests/services.test.ts",
         "tests/providers.test.ts",
-        "tests/e2e/inapp.mjs"
+        "tests/e2e/inapp.mjs",
+        "tests/transport.test.ts",
+        "scripts/load-test.ts"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
         "artifacts/e2e/report.json",
-        "docs/IDENTITY_PROVIDERS.md"
+        "docs/IDENTITY_PROVIDERS.md",
+        "docs/LOAD_TEST.md",
+        "artifacts/load/report.json"
       ],
-      "remainingAcceptanceCriteria": "Production adapters AwaitingProviderContract; real upstream independence and fresh-attribute contracts require external access. Full revocation remains in V009."
+      "remainingAcceptanceCriteria": "Production adapters AwaitingProviderContract; real upstream independence, upstream DDoS protection and fresh-attribute contracts require external access. The local read profile is not production capacity evidence. Full revocation remains in V009."
     },
     {
       "id": "A11",
       "title": "Купівля голосів і примус",
       "attackerCapabilities": "Credential transfer, supervised screen, compromised device or private keys",
       "trustBoundary": "Participant device and sufficient key holders",
-      "controls": "Pre-vote warning; receipts omit choice, identity and encryption secrets",
-      "residualRisk": "Belenios integration provides neither receipt-freeness nor coercion resistance; explicit limitation experiments pending",
+      "controls": "Pre-vote warning; strict receipts omit choice, identity, private credential and encryption secrets; storage experiment distinguishes inclusion evidence from choice evidence",
+      "residualRisk": "Belenios integration provides neither receipt-freeness nor coercion resistance. Credential transfer, supervised screens, disclosed randomness, compromised devices, sufficient trustee collusion and unanimity remain limitations",
       "requirements": [
         "15.1",
         "15.10"
       ],
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/24",
-        "https://github.com/Lontkovsky/openvote/issues/27"
+        "https://github.com/Lontkovsky/openvote/issues/31"
       ],
       "prs": [],
       "defenseOutcome": "KnownLimitation",
-      "evidenceState": "NotTested",
+      "evidenceState": "AutomatedTested",
       "implementationState": "Partial",
-      "verification": [],
-      "actualEvidence": [],
-      "remainingAcceptanceCriteria": "Belenios integration provides neither receipt-freeness nor coercion resistance; explicit limitation experiments pending"
+      "verification": [
+        "tests/services.test.ts",
+        "docs/GUARANTEES.md",
+        "docs/PRIVACY_COMPROMISE.md"
+      ],
+      "actualEvidence": [
+        "The strict signed receipt parsed to protocol, poll ID, manifest hash and tracker only; no answer, person, private credential or randomness was present",
+        "Credential transfer, supervised screen, randomness disclosure, tracker use and compromised-device scenarios are individually classified without claiming receipt-freeness"
+      ],
+      "remainingAcceptanceCriteria": "The declared protocol does not provide receipt-freeness or coercion resistance; production client integrity and organizational trustee independence remain separate work"
     }
   ]
 }

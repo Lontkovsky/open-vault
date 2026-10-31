@@ -9,7 +9,7 @@ COPY --chown=belenios tools/native /home/belenios/source/src/openvote_share
 RUN . /home/belenios/.belenios/env.sh && dune build --release src/openvote_share/share_verify.exe && cp _build/default/src/openvote_share/share_verify.exe /home/belenios/output/openvote-share-verify
 
 FROM --platform=linux/amd64 debian:13-slim@sha256:d7e12182ce18b85b93007c1dedf31f2d29e01ccf3182cc4017c709b6259bc132 AS crypto-runtime
-RUN apt-get update -qq && apt-get install -y --no-install-recommends ca-certificates libev4t64 libgmp10 libsodium23 libssl3t64 zlib1g bash jq python3 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -qq && apt-get upgrade -y && apt-get install -y --no-install-recommends ca-certificates libev4t64 libgmp10 libsodium23 libssl3t64 zlib1g bash jq python3 && rm -rf /var/lib/apt/lists/*
 COPY --from=build /home/belenios/output /opt/belenios
 COPY LICENSE /opt/belenios/LICENSE.openvote
 ENV PATH=/opt/belenios:$PATH
@@ -28,9 +28,10 @@ COPY apps/web apps/web
 COPY packages/domain packages/domain
 COPY --from=build /home/belenios/output/belenios.js /home/belenios/output/libsodium.wasm /home/belenios/output/COPYING.belenios /home/belenios/output/LICENSE.libsodium apps/web/public/crypto/
 RUN pnpm --filter @openvote/web build
+RUN CI=true pnpm prune --prod
 
 FROM --platform=linux/amd64 node:24.20.0-trixie-slim@sha256:a747ad80c8a161b650d79a6da9c422005b91148b18b8d2c669eb5a0b7c07e600 AS render-runtime
-RUN apt-get update -qq && apt-get install -y --no-install-recommends ca-certificates libev4t64 libgmp10 libsodium23 libssl3t64 zlib1g nginx python3 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -qq && apt-get upgrade -y && apt-get install -y --no-install-recommends ca-certificates libev4t64 libgmp10 libsodium23 libssl3t64 zlib1g nginx python3 && rm -rf /var/lib/apt/lists/* /usr/local/lib/node_modules/npm && rm -f /usr/local/bin/npm /usr/local/bin/npx
 WORKDIR /app
 COPY --from=build /home/belenios/output /opt/belenios
 COPY --from=node-build /app/node_modules node_modules

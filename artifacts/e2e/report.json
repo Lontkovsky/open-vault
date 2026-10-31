@@ -1,11 +1,11 @@
 {
-  "runId": "6f9cb9f991",
-  "sourceHash": "fd7cf14702dde22addaafd900229219984a685b6c4863a292ed487a41fa98671",
-  "finalSourceHash": "fd7cf14702dde22addaafd900229219984a685b6c4863a292ed487a41fa98671",
+  "runId": "6c9fa7afdf",
+  "sourceHash": "43c4f1e7fd2ea551720094af60d0012ea176df7b8d064517ffa7883323d0f782",
+  "finalSourceHash": "43c4f1e7fd2ea551720094af60d0012ea176df7b8d064517ffa7883323d0f782",
   "browser": "Existing in-app Browser; supplied tab.playwright binding",
   "standaloneBrowserStarted": false,
-  "startedAt": "2026-10-30T15:45:39.586Z",
-  "finishedAt": "2026-10-30T15:51:30.947Z",
+  "startedAt": "2026-10-31T11:30:06.665Z",
+  "finishedAt": "2026-10-31T11:36:50.034Z",
   "passed": true,
   "results": [
     {
