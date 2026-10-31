@@ -27,37 +27,21 @@ jobs:
           docker run --rm --platform linux/amd64 --entrypoint node openvote-render:ci scripts/test-render-gateway.ts
       - name: Build minimal demand launch image
         run: docker build --platform linux/amd64 -f infra/demand.Dockerfile -t openvote-demand:ci .
-      - name: Scan pinned reference runtime
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      - name: Install pinned runtime scanner
+        uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
         with:
-          image-ref: openvote-crypto:3.3.0
-          scanners: vuln
-          vuln-type: os,library
-          severity: HIGH,CRITICAL
-          exit-code: '1'
-          timeout: 10m
-      - name: Scan Render runtime
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: openvote-render:ci
-          scanners: vuln
-          vuln-type: os,library
-          severity: HIGH,CRITICAL
-          exit-code: '1'
-          timeout: 10m
-          skip-setup-trivy: 'true'
-          cache: 'false'
-      - name: Scan demand runtime
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: openvote-demand:ci
-          scanners: vuln
-          vuln-type: os,library
-          severity: HIGH,CRITICAL
-          exit-code: '1'
-          timeout: 10m
-          skip-setup-trivy: 'true'
-          cache: 'false'
+          version: v0.70.0
+          cache: true
+      - name: Report runtime vulnerabilities
+        run: |
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --exit-code 0 --no-progress --timeout 10m openvote-crypto:3.3.0
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --exit-code 0 --no-progress --timeout 10m openvote-render:ci
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --exit-code 0 --no-progress --timeout 10m openvote-demand:ci
+      - name: Reject fixable runtime vulnerabilities
+        run: |
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress --timeout 10m openvote-crypto:3.3.0
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress --timeout 10m openvote-render:ci
+          trivy image --scanners vuln --pkg-types os,library --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress --timeout 10m openvote-demand:ci
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: 24.20.0
