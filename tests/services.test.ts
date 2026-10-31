@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { z } from 'zod';
-import { Envelope, Manifest, Poll, Receipt, ResultContract, Session } from '../packages/domain/src/index.ts';
+import { Envelope, Manifest, Poll, Receipt, RemovedPoll, ResultContract, Session } from '../packages/domain/src/index.ts';
 import { database, pseudonym, readConfig, required, sha } from '../apps/api/src/common.ts';
 import { call, createPoll, fixtureContent, generateBallot, login, ok, approvedReview } from './support/flow.ts';
 import { FinalSet, Trust, verifyFinal } from '../packages/domain/src/checkpoints.ts';
@@ -127,6 +127,47 @@ describe('real service boundaries', () => {
         { kind: 'MethodologicalReview', reason: duplicate.reason },
         { kind: 'AppealResolved', reason: resolution.reason },
       ]);
+    } finally {
+      if (pollId !== null) {
+        const pool = database(await readConfig('management'));
+        await pool.query('DELETE FROM events WHERE poll_id=$1', [pollId]);
+        await pool.query('DELETE FROM appeals WHERE poll_id=$1', [pollId]);
+        await pool.query('DELETE FROM polls WHERE id=$1', [pollId]);
+        await pool.end();
+      }
+      for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
+    }
+  }, 30000);
+
+  it('replaces legally removed content with a minimal public tombstone', async () => {
+    const author = await login('TEST-PERSON-0011', 'A'), moderator = await login('TEST-PERSON-0012', 'A');
+    const participant = await login('TEST-PERSON-0002', 'B'), tokens = [author.token, moderator.token, participant.token];
+    let pollId: string | null = null;
+    try {
+      const content = fixtureContent(new Date(Date.now() + 3600000), 'Чи приховує законне вилучення синтетичний зміст питання?');
+      const draft = z.object({ poll: Poll }).parse(await ok('management', '/v1/drafts', 'POST', content, author.token)).poll;
+      pollId = draft.id;
+      const removal = { action: 'Cancelled', kind: 'LegalContentRemoval', reason: 'Синтетичний тест законного вилучення без реального персонального або незаконного матеріалу.' };
+      expect(await call('management', `/v1/polls/${pollId}/incident`, 'POST', removal, participant.token)).toEqual({ status: 403, value: { error: 'MODERATOR_REQUIRED' } });
+
+      const tombstone = RemovedPoll.parse(z.object({ poll: RemovedPoll }).parse(await ok('management', `/v1/polls/${pollId}/incident`, 'POST', removal, moderator.token)).poll);
+      expect(tombstone).toEqual({ id: pollId, state: 'Cancelled', contentStatus: 'Removed', reason: 'LegalContentRemoval' });
+      expect(await ok('management', `/v1/polls/${pollId}`)).toEqual(tombstone);
+      const catalogue = z.object({ polls: z.array(Poll) }).parse(await ok('management', '/v1/polls'));
+      expect(catalogue.polls.some(poll => poll.id === pollId)).toBe(false);
+      const authorView = z.object({ polls: z.array(Poll) }).parse(await ok('management', '/v1/my-drafts', 'GET', undefined, author.token));
+      expect(authorView.polls.some(poll => poll.id === pollId)).toBe(false);
+      expect(await call('management', `/v1/polls/${pollId}/incident`, 'POST', removal, moderator.token)).toEqual({ status: 410, value: { error: 'POLL_CONTENT_REMOVED' } });
+
+      const pool = database(await readConfig('management'));
+      try {
+        const stored = required((await pool.query<{ doc: unknown }>('SELECT doc FROM polls WHERE id=$1', [pollId])).rows[0]).doc;
+        expect(RemovedPoll.parse(stored)).toEqual(tombstone);
+        expect(JSON.stringify(stored)).not.toContain(content.question);
+        expect(JSON.stringify(stored)).not.toContain(content.context);
+        const events = await pool.query<{ kind: string; reason: string }>('SELECT kind,reason FROM events WHERE poll_id=$1 ORDER BY id', [pollId]);
+        expect(events.rows).toEqual([{ kind: 'LegalContentRemoval', reason: removal.reason }]);
+      } finally { await pool.end(); }
     } finally {
       if (pollId !== null) {
         const pool = database(await readConfig('management'));

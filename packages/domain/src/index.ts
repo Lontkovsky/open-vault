@@ -49,6 +49,10 @@ export const Poll = z.strictObject({
   review: Review.nullable(), methodologyStatus: z.enum(['Pending', 'Reviewed', 'Rejected']),
   contentStatus: z.enum(['Visible', 'Removed']),
 });
+export const RemovedPoll = z.strictObject({
+  id: z.string().uuid(), state: z.enum(['Cancelled', 'Invalidated']),
+  contentStatus: z.literal('Removed'), reason: z.literal('LegalContentRemoval'),
+});
 export const Checkpoint = z.strictObject({
   protocol: z.literal('openvote-checkpoint-v1'), pollId: z.string(), manifestHash: z.string(),
   sequence: z.number().int().nonnegative(), previous: z.string().nullable(),
@@ -69,6 +73,7 @@ export type AttributesType = z.infer<typeof Attributes>;
 export type ContentType = z.infer<typeof Content>;
 export type ManifestType = z.infer<typeof Manifest>;
 export type PollType = z.infer<typeof Poll>;
+export type RemovedPollType = z.infer<typeof RemovedPoll>;
 export type SessionType = z.infer<typeof Session>;
 export type ResultType = z.infer<typeof ResultContract>;
 export type EnvelopeType = z.infer<typeof Envelope>;

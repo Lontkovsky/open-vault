@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rm } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { z } from 'zod';
-import { Content, Manifest, Poll, Policy, Review, Session, validateSchedule } from '../../../packages/domain/src/index.ts';
+import { Content, Manifest, Poll, Policy, RemovedPoll, Review, Session, validateSchedule } from '../../../packages/domain/src/index.ts';
 import type { PollType } from '../../../packages/domain/src/index.ts';
 import { application, core, database, Failure, jsonRequest, required, sha, transaction } from './common.ts';
 import type { ConfigType } from './common.ts';
@@ -33,28 +33,34 @@ export async function managementApp(config: ConfigType, publicOrigin: string) {
     if (person.role !== 'moderator') throw new Failure('MODERATOR_REQUIRED', 403);
     return person;
   }
-  async function find(id: string) {
+  async function stored(id: string) {
     const result = await pool.query<{ doc: unknown; author_person: string }>('SELECT doc,author_person FROM polls WHERE id=$1', [id]);
     const row = result.rows[0];
     if (!row) throw new Failure('POLL_NOT_FOUND', 404);
+    return row;
+  }
+  async function find(id: string) {
+    const row = await stored(id);
+    if (RemovedPoll.safeParse(row.doc).success) throw new Failure('POLL_CONTENT_REMOVED', 410);
     return { poll: currentPoll(row.doc), author: row.author_person };
   }
   app.get('/v1/polls', async request => {
     const input = z.strictObject({ q: z.string().max(150).optional(), category: z.string().max(60).optional(), state: z.string().max(30).optional() }).parse(request.query);
-    const result = await pool.query<{ doc: unknown }>('SELECT doc FROM polls ORDER BY created_at DESC,id DESC');
-    const polls = result.rows.map(r => currentPoll(r.doc)).filter(p => !['Draft', 'Review', 'Rejected'].includes(p.state) && p.contentStatus === 'Visible')
+    const result = await pool.query<{ doc: unknown }>("SELECT doc FROM polls WHERE doc->>'contentStatus'='Visible' ORDER BY created_at DESC,id DESC");
+    const polls = result.rows.map(r => currentPoll(r.doc)).filter(p => !['Draft', 'Review', 'Rejected'].includes(p.state))
       .filter(p => input.q === undefined || p.content.question.toLocaleLowerCase('uk').includes(input.q.toLocaleLowerCase('uk')))
       .filter(p => input.category === undefined || p.content.category === input.category)
       .filter(p => input.state === undefined || p.state === input.state);
     return { polls, sort: 'Час створення: новіші спочатку; за однакового часу — ідентифікатор. Без персоналізації.', environment: config.environment };
   });
   app.get('/v1/polls/:id', async request => {
-    const { id } = Params.parse(request.params), { poll, author } = await find(id);
+    const { id } = Params.parse(request.params), row = await stored(id), removed = RemovedPoll.safeParse(row.doc);
+    if (removed.success) return removed.data;
+    const poll = currentPoll(row.doc), author = row.author_person;
     if (['Draft', 'Review', 'Rejected'].includes(poll.state)) {
       const person = await identity(request.headers.authorization);
       if (person.person !== author && person.role !== 'moderator') throw new Failure('POLL_NOT_FOUND', 404);
     }
-    if (poll.contentStatus === 'Removed') return { id, state: poll.state, contentStatus: 'Removed', reason: 'LegalContentRemoval' };
     const events = await pool.query<{ kind: string; reason: string; actor_role: string; payload: unknown }>('SELECT kind,reason,actor_role,payload FROM events WHERE poll_id=$1 ORDER BY id', [id]);
     return { poll, events: events.rows };
   });
@@ -68,7 +74,7 @@ export async function managementApp(config: ConfigType, publicOrigin: string) {
   });
   app.get('/v1/my-drafts', async request => {
     const person = await identity(request.headers.authorization);
-    const rows = await pool.query<{ doc: unknown }>('SELECT doc FROM polls WHERE author_person=$1 ORDER BY created_at DESC', [person.person]);
+    const rows = await pool.query<{ doc: unknown }>("SELECT doc FROM polls WHERE author_person=$1 AND doc->>'contentStatus'='Visible' ORDER BY created_at DESC", [person.person]);
     return { polls: rows.rows.map(r => currentPoll(r.doc)) };
   });
   app.get('/v1/review-queue', async request => {
@@ -219,11 +225,14 @@ export async function managementApp(config: ConfigType, publicOrigin: string) {
     if (input.action === 'Cancelled' && ['Published', 'Invalidated'].includes(poll.state)) throw new Failure('INVALID_TRANSITION', 409);
     if (poll.cryptoId !== null) await jsonRequest(`http://127.0.0.1:4302/internal/state/${poll.cryptoId}`, { state: input.action }, required(config.ballotToken));
     const updated = Poll.parse({ ...poll, state: input.action });
+    const storedDocument = input.kind === 'LegalContentRemoval'
+      ? RemovedPoll.parse({ id, state: input.action, contentStatus: 'Removed', reason: 'LegalContentRemoval' })
+      : updated;
     await transaction(pool, async client => {
-      await client.query('UPDATE polls SET doc=$2 WHERE id=$1', [id, updated]);
+      await client.query('UPDATE polls SET doc=$2 WHERE id=$1', [id, storedDocument]);
       await client.query('INSERT INTO events(poll_id,kind,reason,actor_role,payload,created_at) VALUES($1,$2,$3,$4,$5,now())', [id, input.kind, input.reason, person.role, { action: input.action }]);
     });
-    return { poll: updated };
+    return { poll: storedDocument };
   });
   return app;
 }

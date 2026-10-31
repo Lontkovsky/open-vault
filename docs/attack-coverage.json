@@ -249,15 +249,15 @@
       "title": "Цензура та суперечливі історії",
       "attackerCapabilities": "Operator rolls back DB or serves split views",
       "trustBoundary": "Observers must exchange incompatible evidence",
-      "controls": "Separate public observer with pinned signer/manifest, signed history persistence, known acknowledgements, closed-set freeze, catalogue/content comparison and native public result verification",
-      "residualRisk": "Observers must exchange evidence to detect isolated forks; own retained state/trust distribution must be protected. Lawful tombstones and external read-only restoration remain open",
+      "controls": "Separate public observer with pinned signer/manifest, signed history persistence, known acknowledgements, closed-set freeze, catalogue/content comparison, native public result verification, minimal lawful-removal tombstones and a verified static recovery export without identity access or writes",
+      "residualRisk": "Observers must exchange evidence to detect isolated forks; own retained state/trust distribution must be protected. Separately hosted snapshots require explicit operator withdrawal after lawful removal",
       "requirements": [
         "15.1",
         "15.7"
       ],
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/27",
-        "https://github.com/Lontkovsky/openvote/issues/29",
+        "https://github.com/Lontkovsky/openvote/issues/30",
         "https://github.com/Lontkovsky/openvote/issues/33"
       ],
       "prs": [],
@@ -267,15 +267,19 @@
       "verification": [
         "tests/observer.test.ts",
         "scripts/observer.ts",
-        "scripts/audit-export.ts"
+        "scripts/audit-export.ts",
+        "scripts/mirror-export.ts",
+        "tests/services.test.ts"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
         "artifacts/observer/observation.json",
         "artifacts/observer/audit.json",
-        "docs/OBSERVER.md"
+        "docs/OBSERVER.md",
+        "A legal-content incident replaced the public document with a strict four-field tombstone, removed it from catalogue and author views, and preserved only the separate reasoned incident event",
+        "A natively verified static page, result JSON and audit package were served by an independent GET-only host with no identity request; POST returned 405 and removed content produced no export"
       ],
-      "remainingAcceptanceCriteria": "Observer PR #47 merged after passing local tests and CI. Lawful tombstones, coordinated withdrawal and external read-only restoration remain open."
+      "remainingAcceptanceCriteria": "V019 local acceptance is covered. Final Browser execution, PR and exact-head CI remain pending; isolated-fork detection and withdrawal of separately hosted snapshots retain their declared operator conditions."
     },
     {
       "id": "A09",

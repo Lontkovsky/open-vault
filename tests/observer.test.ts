@@ -207,4 +207,51 @@ describe('independent public observer', () => {
       await expect(readFile(removed)).rejects.toMatchObject({ code: 'ENOENT' });
     } finally { await rm(directory, { recursive: true, force: true }); }
   }, 60000);
+
+  it('exports a static read-only mirror that needs no identity service', async () => {
+    const directory = await mkdtemp('.runtime/observer-mirror-test-');
+    let mirrorServer: ReturnType<typeof createServer> | null = null;
+    try {
+      const configFile = join(directory, 'trust.json'), output = join(directory, 'mirror');
+      await writeFile(configFile, JSON.stringify(config));
+      const run = (target: string) => execute(process.execPath, ['scripts/mirror-export.ts', configFile, target], { timeout: 30000 });
+      expect((await run(output)).stdout).toContain('ReadOnlyMirrorExported');
+      expect(JSON.parse(await readFile(join(output, 'result.json'), 'utf8'))).toEqual(audit.result);
+      expect(AuditPackage.parse(JSON.parse(await readFile(join(output, 'audit.json'), 'utf8')))).toEqual(audit);
+      const html = await readFile(join(output, 'index.html'), 'utf8');
+      expect(html).toContain(audit.result.question);
+      expect(html).toContain('result.json');
+      expect(html).toContain('audit.json');
+      expect(html).not.toContain('<script');
+      expect(requests).toHaveLength(7);
+      expect(requests.every(request => request.method === 'GET' && request.authorization === undefined && request.cookie === undefined && !request.url?.includes('identity'))).toBe(true);
+
+      mirrorServer = createServer((request, response) => {
+        if (!['GET', 'HEAD'].includes(request.method ?? '')) { response.writeHead(405); response.end(); return; }
+        const name = request.url === '/' ? 'index.html' : request.url?.slice(1);
+        if (name === undefined || !['index.html', 'result.json', 'audit.json'].includes(name)) { response.writeHead(404); response.end(); return; }
+        void readFile(join(output, name)).then(body => {
+          response.setHeader('content-type', name.endsWith('.json') ? 'application/json' : 'text/html; charset=utf-8');
+          response.end(request.method === 'HEAD' ? undefined : body);
+        }, () => { response.writeHead(500); response.end(); });
+      });
+      await new Promise<void>(resolve => mirrorServer?.listen(0, '127.0.0.1', resolve));
+      const address = mirrorServer.address();
+      if (address === null || typeof address === 'string') throw new Error('MIRROR_TEST_SERVER_NOT_BOUND');
+      const origin = 'http://127.0.0.1:' + address.port;
+      expect(await (await fetch(origin + '/')).text()).toContain(audit.result.question);
+      expect(await (await fetch(origin + '/result.json')).json()).toEqual(audit.result);
+      expect((await fetch(origin + '/audit.json')).status).toBe(200);
+      expect((await fetch(origin + '/', { method: 'POST' })).status).toBe(405);
+
+      await expect(run(output)).rejects.toThrow();
+      mode = 'removed';
+      const removed = join(directory, 'removed');
+      await expect(run(removed)).rejects.toThrow();
+      await expect(readFile(join(removed, 'index.html'))).rejects.toMatchObject({ code: 'ENOENT' });
+    } finally {
+      if (mirrorServer !== null) await new Promise<void>((resolve, reject) => mirrorServer?.close(error => error ? reject(error) : resolve()));
+      await rm(directory, { recursive: true, force: true });
+    }
+  }, 60000);
 });
