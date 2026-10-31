@@ -46,6 +46,8 @@ The integration tests use live local services and native cryptography. They remo
 
 [Resource limits and the measured local load profile](docs/LOAD_TEST.md) document exact request-body, active-work, queue and timeout bounds plus the actual hardware, two-poll dataset and 1,000-request result. The local read result is not a national-scale or production-capacity claim.
 
+[Reproducible client releases](docs/REPRODUCIBLE_RELEASE.md) define the two clean client builds, complete byte manifests, checksums, CycloneDX SBOM, source/toolchain provenance and the separately trusted monitor that detects substituted server JavaScript. The self-generated evidence is not an independent signature and does not prove identical delivery to every user.
+
 <a id="verification"></a>
 
 Verify the archive downloaded by the browser without identity storage:

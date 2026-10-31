@@ -32,6 +32,8 @@ jobs:
           node-version: 24.20.0
       - name: Install locked workspace
         run: npm install -g pnpm@10.33.0 && pnpm install --frozen-lockfile
+      - name: Verify reproducible clients and release evidence
+        run: pnpm release:verify artifacts/release-ci
       - name: Bootstrap isolated synthetic services
         run: pnpm bootstrap
       - name: Start local application
@@ -52,4 +54,9 @@ jobs:
         with:
           name: reference-public-evidence
           path: artifacts/reference
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-public-evidence
+          path: artifacts/release-ci
           retention-days: 14

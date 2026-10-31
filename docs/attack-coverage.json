@@ -301,8 +301,8 @@
       "title": "Підміна збірки та непрозоре управління",
       "attackerCapabilities": "Owner/CI/host substitutes executable code",
       "trustBoundary": "Trusted source/release reference held separately",
-      "controls": "Pinned upstream/dependencies, public PRs/governance and restricted CI permissions",
-      "residualRisk": "Two-clean-build comparison, independent client monitor and release locking pending",
+      "controls": "Pinned upstream/dependencies, public PRs and restricted CI permissions; two-clean-client-build byte comparison; complete client manifests/checksums; CycloneDX SBOM; source/toolchain provenance; separately trusted client monitor",
+      "residualRisk": "Self-generated provenance is unsigned; independent monitor operation, selective-delivery resistance, native/runtime reproducibility and complete release governance remain pending",
       "requirements": [
         "15.1",
         "15.8"
@@ -315,11 +315,20 @@
       ],
       "prs": [],
       "defenseOutcome": "PartiallyMitigated",
-      "evidenceState": "NotTested",
+      "evidenceState": "AutomatedTested",
       "implementationState": "Partial",
-      "verification": [],
-      "actualEvidence": [],
-      "remainingAcceptanceCriteria": "Two-clean-build comparison, independent client monitor and release locking pending"
+      "verification": [
+        "scripts/reproducible-release.ts",
+        "scripts/client-monitor.ts",
+        "tests/release-integrity.test.ts",
+        ".github/workflows/ci.yml"
+      ],
+      "actualEvidence": [
+        "docs/REPRODUCIBLE_RELEASE.md",
+        "The real HTTP monitor accepted the trusted HTML/JavaScript pair and rejected substituted JavaScript at the same path",
+        "The release command compares every full and demand client byte from two fresh source and dependency directories before writing manifests, checksums, SBOM and provenance"
+      ],
+      "remainingAcceptanceCriteria": "Operate the monitor independently, sign release attestations, extend reproducibility to native/runtime artifacts and complete release governance"
     },
     {
       "id": "A10",
