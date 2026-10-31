@@ -30,6 +30,8 @@ projects:
                 fromDatabase:
                   name: openvote-demand
                   property: connectionString
+              - key: OPENAI_API_KEY
+                sync: false
         databases:
           - name: openvote-demand
             databaseName: openvote_demand

@@ -3,11 +3,12 @@ import { pathToFileURL } from 'node:url';
 import staticPlugin from '@fastify/static';
 import pg from 'pg';
 import { z } from 'zod';
+import { OpenAiDemandChatProvider } from '../apps/api/src/demand-chat-provider.ts';
 import { demandApp } from '../apps/api/src/demand.ts';
 import { parsePublicOrigin } from '../apps/api/src/common.ts';
 import { migrateDirectory } from './migrate.ts';
 
-type DemandConfiguration = { port: number; publicOrigin: string; databaseUrl: string };
+type DemandConfiguration = { port: number; publicOrigin: string; databaseUrl: string; openAiApiKey: string };
 
 function fail(code: string): never { throw new Error(code); }
 
@@ -18,13 +19,14 @@ export function parseDemandConfiguration(environment: NodeJS.ProcessEnv): Demand
   const port = Number(rawPort);
   if (port < 1024 || port > 65535) return fail('DEMAND_PORT_INVALID');
   const databaseUrl = z.string().min(1).parse(environment.DEMAND_DATABASE_URL);
+  const openAiApiKey = z.string().min(20).regex(/^\S+$/).parse(environment.OPENAI_API_KEY);
   let parsed: URL;
   try { parsed = new URL(databaseUrl); } catch { return fail('DEMAND_DATABASE_URL_INVALID'); }
   if (parsed.protocol !== 'postgresql:' || parsed.hostname === '' || parsed.username === '' ||
       parsed.password === '' || decodeURIComponent(parsed.pathname) !== '/openvote_demand' || parsed.search !== '' || parsed.hash !== '') {
     return fail('DEMAND_DATABASE_URL_INVALID');
   }
-  return { port, publicOrigin, databaseUrl };
+  return { port, publicOrigin, databaseUrl, openAiApiKey };
 }
 
 function pool(databaseUrl: string): pg.Pool {
@@ -36,7 +38,8 @@ export async function createDemandService(configuration: DemandConfiguration, st
   const databasePool = pool(configuration.databaseUrl);
   try {
     await migrateDirectory(databasePool, 'migrations/demand');
-    const app = await demandApp(databasePool, 'demo', configuration.publicOrigin);
+    const chatProvider = new OpenAiDemandChatProvider(configuration.openAiApiKey, fetch);
+    const app = await demandApp(databasePool, 'demo', configuration.publicOrigin, chatProvider);
     await app.register(staticPlugin, { root: staticRoot, index: false });
     app.get('/', (_request, reply) => reply.sendFile('demand.html'));
     return app;

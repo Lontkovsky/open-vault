@@ -103,6 +103,7 @@ export async function application<T extends Pick<ConfigType, 'environment' | 'ro
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof Failure) return reply.code(error.statusCode).send({ error: error.message });
     if (error instanceof z.ZodError) return reply.code(400).send({ error: 'INVALID_INPUT' });
+    if (error instanceof Error && 'code' in error && error.code === 'FST_ERR_CTP_BODY_TOO_LARGE') return reply.code(413).send({ error: 'INVALID_INPUT' });
     return reply.code(500).send({ error: 'REQUEST_FAILED' });
   });
   app.get('/health', () => ({ state: 'ok', role: config.role, environment: config.environment }));

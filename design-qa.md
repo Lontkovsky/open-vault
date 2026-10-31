@@ -43,6 +43,12 @@ No actionable P0, P1, or P2 visual or interaction findings remain.
 - The launch goal uses only the authoritative `Підтримую` count. Browser states `0`, `37` with four unrelated answers, `9,999`, `10,000`, and `10,001` confirmed the remaining count, exact threshold, reached message, and absence of negative values. The `1/0/0` submission updated the goal to `1` and `9,999` remaining and persisted after reload.
 - The video starts paused, is muted, has native controls and no autoplay, advances on play, and pauses successfully.
 - At `390 × 844`, the fixed header, tagline, CTA, form, and video remain usable with no horizontal overflow.
+- The FAQ follows the privacy section with nine native disclosures, all closed on initial load. Mouse activation opened the first answer; keyboard `Space` closed it and `Enter` opened the final answer. The answer about result integrity was left open for review.
+- At the default desktop viewport the FAQ rendered within `clientWidth = scrollWidth = 1265`. At the explicit `390 × 844` mobile viewport the long database-access question wrapped cleanly, the answer remained readable, the fixed header and CTA stayed visible, and `clientWidth = scrollWidth = 375` after accounting for the vertical scrollbar.
+- The unchanged poll still exposed one header CTA and three radio answers; submit remained disabled before a choice and confirmation. The CTA reached `#poll` with the poll at `92.05` px, below the `76.25` px fixed header. No response was submitted during the FAQ verification.
+- The rejected inline AI form is absent. The page starts with one floating chat launcher and no open panel; opening it renders the focused compact dialog with the title `Тарас` and a short greeting, without a subtitle or service note.
+- A real question appeared as a user bubble immediately, followed by `Тарас друкує…` and the actual grounded answer. The composer cleared and re-enabled after success. Closing returned focus to the launcher; reopening preserved the conversation.
+- At `390 × 844`, the open panel measured `355 × 520` px, the composer remained visible, the 54 px launcher stayed within the viewport, and `clientWidth = scrollWidth = 375`. The public page contained no provider brand or service note.
 - In-app Browser console errors and warnings checked: none.
 
 final result: passed

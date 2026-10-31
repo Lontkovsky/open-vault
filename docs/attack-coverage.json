@@ -185,8 +185,8 @@
       "title": "Маніпуляція формулюванням і контекстом",
       "attackerCapabilities": "Author/moderator changes official content or manipulates language",
       "trustBoundary": "Honest review and client receiving expected code",
-      "controls": "Five-point rubric, fixed official manifest/context and client comparison",
-      "residualRisk": "Malicious language suite and source/content removal policy tests pending",
+      "controls": "Five-point rubric, fixed official manifest/context and client comparison; the demand assistant uses the shared FAQ as its only approved context, disables tools and web access, and has strict prompt-boundary and request-limit tests",
+      "residualRisk": "External model behavior, the broader malicious language suite and source/content removal policy tests remain pending",
       "requirements": [
         "15.1",
         "15.5"
@@ -194,7 +194,8 @@
       "issues": [
         "https://github.com/Lontkovsky/openvote/issues/21",
         "https://github.com/Lontkovsky/openvote/issues/22",
-        "https://github.com/Lontkovsky/openvote/issues/29"
+        "https://github.com/Lontkovsky/openvote/issues/29",
+        "https://github.com/Lontkovsky/openvote/issues/65"
       ],
       "prs": [
         "https://github.com/Lontkovsky/openvote/pull/49"
@@ -204,13 +205,15 @@
       "implementationState": "Partial",
       "verification": [
         "tests/services.test.ts",
-        "tools/test_reference.py"
+        "tools/test_reference.py",
+        "tests/demand-chat.test.ts"
       ],
       "actualEvidence": [
         "artifacts/services/tests.json",
-        "artifacts/reference/reference-report.json"
+        "artifacts/reference/reference-report.json",
+        "docs/PROGRESS.md"
       ],
-      "remainingAcceptanceCriteria": "Malicious language suite and source/content removal policy tests pending"
+      "remainingAcceptanceCriteria": "External model behavior, the broader malicious language suite and source/content removal policy tests remain pending"
     },
     {
       "id": "A07",
