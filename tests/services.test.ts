@@ -502,7 +502,7 @@ describe('real service boundaries', () => {
       expect(response.headers.get('content-disposition')).toBe(`attachment; filename="${filename}"`);
       expect(await response.text()).toBe(contents);
     }
-    expect(accepted.parse(await ok('ballot', `/v1/elections/${id}/ballots`, 'POST', { ballot })).receipt).toEqual(receipt);
+    expect(accepted.parse(await ok('ballot', `/v1/elections/${id}/ballots`, 'POST', { ballot: acceptedBallot })).receipt).toEqual(receipt);
     const audit = z.object({ archive: z.string() }).parse(await ok('ballot', `/v1/elections/${id}/audit`));
     await mkdir('artifacts/services', { recursive: true });
     await writeFile('artifacts/services/election.bel', Buffer.from(audit.archive, 'base64'));
