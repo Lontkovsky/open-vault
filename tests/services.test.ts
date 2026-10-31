@@ -93,6 +93,52 @@ describe('real service boundaries', () => {
     }
   }, 30000);
 
+  it('records reasoned duplicate moderation and permits an authorized appeal', async () => {
+    const author = await login('TEST-PERSON-0011', 'A'), moderator = await login('TEST-PERSON-0012', 'A');
+    const participant = await login('TEST-PERSON-0002', 'B'), tokens = [author.token, moderator.token, participant.token];
+    let pollId: string | null = null, appealId: string | null = null;
+    try {
+      const content = fixtureContent(new Date(Date.now() + 3600000), 'Чи має пояснюване рішення про дублікат бути доступним для оскарження?');
+      const draft = z.object({ poll: Poll }).parse(await ok('management', '/v1/drafts', 'POST', content, author.token)).poll;
+      pollId = draft.id;
+      await ok('management', `/v1/polls/${pollId}/submit`, 'POST', {}, author.token);
+
+      const incomplete = { ...approvedReview, rubric: { ...approvedReview.rubric, singleProposal: false } };
+      expect(await call('management', `/v1/polls/${pollId}/review`, 'POST', incomplete, participant.token)).toEqual({ status: 403, value: { error: 'MODERATOR_REQUIRED' } });
+      expect(await call('management', `/v1/polls/${pollId}/review`, 'POST', incomplete, moderator.token)).toEqual({ status: 400, value: { error: 'RUBRIC_INCOMPLETE' } });
+
+      const duplicate = { ...incomplete, action: 'duplicate' as const, reason: 'Синтетичне питання позначено дублікатом із явною причиною для перевірки апеляції.' };
+      const rejected = Poll.parse(z.object({ poll: Poll }).parse(await ok('management', `/v1/polls/${pollId}/review`, 'POST', duplicate, moderator.token)).poll);
+      expect(rejected.state).toBe('Rejected');
+      expect(rejected.review).toEqual(duplicate);
+
+      const appeal = z.object({ id: z.string().uuid(), state: z.literal('Open') }).parse(await ok('management', `/v1/polls/${pollId}/appeals`, 'POST',
+        { reason: 'Автор не погоджується з позначенням дубліката та просить повторну методологічну перевірку.' }, author.token));
+      appealId = appeal.id;
+      const resolution = { reason: 'Апеляцію задоволено; питання повернуто автору для уточнення.', reopen: true };
+      expect(await call('management', `/v1/appeals/${appealId}/resolve`, 'POST', resolution, participant.token)).toEqual({ status: 403, value: { error: 'MODERATOR_REQUIRED' } });
+      expect(await ok('management', `/v1/appeals/${appealId}/resolve`, 'POST', resolution, moderator.token)).toEqual({ state: 'Resolved' });
+      expect(await call('management', `/v1/appeals/${appealId}/resolve`, 'POST', resolution, moderator.token)).toEqual({ status: 409, value: { error: 'APPEAL_RESOLVED' } });
+
+      const reopened = z.object({ poll: Poll, events: z.array(z.object({ kind: z.string(), reason: z.string() })) }).parse(await ok('management', `/v1/polls/${pollId}`, 'GET', undefined, author.token));
+      expect(reopened.poll.state).toBe('Draft');
+      expect(reopened.poll.methodologyStatus).toBe('Pending');
+      expect(reopened.events).toEqual([
+        { kind: 'MethodologicalReview', reason: duplicate.reason },
+        { kind: 'AppealResolved', reason: resolution.reason },
+      ]);
+    } finally {
+      if (pollId !== null) {
+        const pool = database(await readConfig('management'));
+        await pool.query('DELETE FROM events WHERE poll_id=$1', [pollId]);
+        await pool.query('DELETE FROM appeals WHERE poll_id=$1', [pollId]);
+        await pool.query('DELETE FROM polls WHERE id=$1', [pollId]);
+        await pool.end();
+      }
+      for (const token of tokens) await call('identity', '/v1/session', 'DELETE', undefined, token);
+    }
+  }, 30000);
+
   it('deduplicates A/B, replays late return and exposes outages without weaker admission', async () => {
     const [a, b] = await Promise.all([login('TEST-PERSON-0002', 'A'), login('TEST-PERSON-0002', 'B')]);
     const cfg = await readConfig('identity');
